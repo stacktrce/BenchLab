@@ -48,7 +48,11 @@ These come from Google's engineering practices for code review (see Sources), ad
 3. **Complexity.** Could a reader understand each function quickly? Could a later change easily introduce a bug here? If not, simplify. Prefer a flat, obvious solution to a clever one. Remove dead code; do not comment it out.
 4. **Tests.** Section 5.
 5. **Naming.** Names say what a thing is or does, without abbreviations that need decoding. A boolean reads as a question (`hasFailedRuns`, `canRun`). Units go in the name or the type when they are not obvious (`deltaSeconds`, `timeout_secs`).
-6. **Comments explain why, not what.** If a comment has to say what the code does, rewrite the code. Good comments record a constraint, a trade-off or a trap ("GNU tar misreads C:\ as a remote host"). Keep doc comments on public functions and types: purpose, units, what failure means. Delete comments your change made stale; never delete or shorten comments you were not asked to touch.
+6. **Comments explain why, not what.** If a comment has to say what the code does, rewrite the code.
+   - **Delete** a comment that restates the name, the type or the next line; narrates steps ("loop over the cases"); labels a section; is commented-out code; or is a TODO with no owner.
+   - **Keep** a comment that records a reason, a constraint, a trap, a unit, an ordering requirement or a safety rationale ("GNU tar misreads C:\ as a remote host"; why a child is killed as a tree; why `fsmonitor` is disabled).
+   - **Doc comments** on public functions and types stay when they say something the signature does not: units, what absence or failure means, an invariant. They go when they only repeat the name.
+   - Delete comments your change made stale. Never delete or shorten a comment you were not asked to touch, except on a branch whose stated purpose is a comment cleanup.
 7. **Consistency.** Follow the existing style and patterns. Where there is no rule, match the surrounding code. Do not restyle code you are not otherwise changing.
 8. **Documentation.** If you change how the app is built, run, configured, installed or what it guarantees, update the README and the plan in the same branch.
 9. **Every line.** Read every line of your diff before committing. If you do not understand something you wrote or copied, fix that first. Generated or lockfile changes can be skimmed, but know why they changed.
@@ -133,6 +137,8 @@ npm run audit:ui -- --shots tmp/shots   # also writes a PNG per screen and theme
 ```
 
 It starts the dev server if needed, renders the app in headless Chrome or Edge (set `CHROME_PATH` if neither is found) with a mocked Tauri bridge (`scripts/ui-audit/mock-tauri.mjs`), and exits 1 on any failure. Add a screen to `SCREENS` in `scripts/ui-audit/audit.mjs` when you add a page or a dialog. Passing axe is necessary, not sufficient: code that compiles and passes can still look wrong, so read the screenshots.
+
+For a refactor that must not change how anything looks, write screenshots before and after (`--shots tmp/before`, `--shots tmp/after`) and run `node scripts/ui-audit/shots-digest.mjs tmp/before tmp/after`. It compares the PNGs byte for byte and exits 1 on any difference. The rendering is deterministic (bundled fonts, fixed mock data), so any difference is a real change.
 
 ## 7. Product rules that must not regress
 
