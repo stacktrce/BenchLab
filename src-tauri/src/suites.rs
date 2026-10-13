@@ -34,6 +34,10 @@ pub struct Case {
     pub working_directory: Option<String>,
     #[serde(default = "default_true")]
     pub enabled: bool,
+    /// Flag this case when it is slower than the baseline by more than this many percent.
+    /// Only a confident breach counts (see the comparison view); None means no budget.
+    #[serde(default)]
+    pub budget_percent: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -109,6 +113,11 @@ pub fn validate(suite: &Suite) -> Vec<String> {
         if case.command.trim().is_empty() {
             problems.push(format!("{label}: command is required."));
         }
+        if let Some(budget) = case.budget_percent
+            && (!budget.is_finite() || budget <= 0.0)
+        {
+            problems.push(format!("{label}: budget must be a number above 0."));
+        }
     }
     problems
 }
@@ -141,7 +150,8 @@ pub fn load_suite(conn: &Connection, id: &str) -> Result<Suite, String> {
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, command, setup_command, cleanup_command, working_directory, enabled
+            "SELECT id, name, command, setup_command, cleanup_command, working_directory, enabled,
+                    budget_percent
              FROM cases WHERE suite_id = ?1 ORDER BY position",
         )
         .map_err(sql_err)?;
@@ -155,6 +165,7 @@ pub fn load_suite(conn: &Connection, id: &str) -> Result<Suite, String> {
                 cleanup_command: r.get(4)?,
                 working_directory: r.get(5)?,
                 enabled: r.get::<_, i64>(6)? != 0,
+                budget_percent: r.get(7)?,
             })
         })
         .map_err(sql_err)?
@@ -237,8 +248,8 @@ pub fn save_suite(conn: &Connection, mut suite: Suite) -> Result<Suite, String> 
         };
         tx.execute(
             "INSERT INTO cases (id, suite_id, position, name, command, setup_command,
-                                cleanup_command, working_directory, enabled)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                                cleanup_command, working_directory, enabled, budget_percent)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 case_id,
                 id,
@@ -248,7 +259,8 @@ pub fn save_suite(conn: &Connection, mut suite: Suite) -> Result<Suite, String> 
                 c.setup_command,
                 c.cleanup_command,
                 c.working_directory,
-                c.enabled as i64
+                c.enabled as i64,
+                c.budget_percent
             ],
         )
         .map_err(sql_err)?;
@@ -365,6 +377,7 @@ mod tests {
             cleanup_command: None,
             working_directory: None,
             enabled: true,
+            budget_percent: None,
         }
     }
 
@@ -507,6 +520,7 @@ mod baseline_tests {
             cleanup_command: None,
             working_directory: None,
             enabled: true,
+            budget_percent: None,
         }
     }
 
@@ -633,5 +647,79 @@ mod baseline_tests {
         // suites and runs reference each other; deleting must not trip a foreign key
         delete_suite(&conn, &suite.id).unwrap();
         assert!(list_suites(&conn).unwrap().iter().all(|s| s.id != suite.id));
+    }
+}
+
+#[cfg(test)]
+mod budget_tests {
+    use super::*;
+    use crate::db::memory;
+
+    fn suite_with_budget(budget: Option<f64>) -> Suite {
+        Suite {
+            id: String::new(),
+            name: "S".into(),
+            description: String::new(),
+            runs: 3,
+            warmup: 0,
+            baseline_run_id: None,
+            schema_version: 0,
+            created_at: String::new(),
+            updated_at: String::new(),
+            cases: vec![Case {
+                id: String::new(),
+                name: "a".into(),
+                command: "echo".into(),
+                setup_command: None,
+                cleanup_command: None,
+                working_directory: None,
+                enabled: true,
+                budget_percent: budget,
+            }],
+        }
+    }
+
+    #[test]
+    fn a_budget_round_trips_and_none_stays_none() {
+        let conn = memory();
+        let with = save_suite(&conn, suite_with_budget(Some(7.5))).unwrap();
+        assert_eq!(with.cases[0].budget_percent, Some(7.5));
+        assert_eq!(
+            load_suite(&conn, &with.id).unwrap().cases[0].budget_percent,
+            Some(7.5)
+        );
+        let without = save_suite(&conn, suite_with_budget(None)).unwrap();
+        assert_eq!(without.cases[0].budget_percent, None);
+    }
+
+    #[test]
+    fn a_budget_can_be_removed_by_editing() {
+        let conn = memory();
+        let mut saved = save_suite(&conn, suite_with_budget(Some(5.0))).unwrap();
+        saved.cases[0].budget_percent = None;
+        assert_eq!(
+            save_suite(&conn, saved).unwrap().cases[0].budget_percent,
+            None
+        );
+    }
+
+    #[test]
+    fn rejects_zero_negative_and_non_finite_budgets() {
+        let conn = memory();
+        for bad in [0.0, -5.0, f64::INFINITY, f64::NAN] {
+            let err = save_suite(&conn, suite_with_budget(Some(bad))).unwrap_err();
+            assert!(
+                err.contains("budget must be a number above 0"),
+                "{bad}: {err}"
+            );
+        }
+        assert!(list_suites(&conn).unwrap().is_empty());
+    }
+
+    #[test]
+    fn older_snapshots_without_the_field_still_load() {
+        let json = r#"{"name":"a","command":"echo"}"#;
+        let case: Case = serde_json::from_str(json).unwrap();
+        assert_eq!(case.budget_percent, None);
     }
 }
