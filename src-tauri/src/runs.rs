@@ -598,6 +598,60 @@ mod tests {
         let _ = std::fs::remove_dir_all(repo);
     }
 
+    /// Needs real hyperfine. Values that look like options must be passed as values: a case named
+    /// "-fast" made hyperfine reject the whole command line.
+    #[test]
+    fn option_like_names_and_hooks_are_passed_as_values() {
+        let Ok(hf) = hyperfine::locate_hyperfine() else {
+            return;
+        };
+        let case = |name: &str, setup: Option<&str>| Case {
+            id: String::new(),
+            name: name.into(),
+            command: "echo hi".into(),
+            setup_command: setup.map(Into::into),
+            cleanup_command: None,
+            working_directory: None,
+            enabled: true,
+            budget_percent: None,
+        };
+        let suite = Suite {
+            id: String::new(),
+            name: "S".into(),
+            description: String::new(),
+            runs: 2,
+            warmup: 0,
+            baseline_run_id: None,
+            schema_version: 1,
+            created_at: String::new(),
+            updated_at: String::new(),
+            cases: vec![
+                case("-fast", None),
+                case("--runs=99", None),
+                case("a=b c", None),
+                case("hooked", Some("--version")),
+            ],
+        };
+        let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
+        let names: Vec<_> = out
+            .results
+            .iter()
+            .map(|r| r["command"].as_str().unwrap())
+            .collect();
+        // setup "--version" is not a valid command, so only that case may fail
+        assert_eq!(
+            names,
+            ["-fast", "--runs=99", "a=b c"],
+            "errors: {:?}",
+            out.errors
+        );
+        assert_eq!(
+            out.results[1]["times"].as_array().unwrap().len(),
+            2,
+            "name must not change the run count"
+        );
+    }
+
     #[test]
     fn only_one_run_at_a_time_and_cancel_reaches_it() {
         let control = RunControl::default();

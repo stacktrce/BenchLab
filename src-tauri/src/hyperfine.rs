@@ -207,6 +207,14 @@ fn kill_tree(child: &mut Child) {
     let _ = child.wait();
 }
 
+/// `--name=value` as one argument. Passed as two, a value that starts with "-" (a case called
+/// "-fast", a hook such as "--version") is parsed as another option and hyperfine refuses to run.
+fn flag(name: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
+    let mut arg = std::ffi::OsString::from(format!("--{name}="));
+    arg.push(value);
+    arg
+}
+
 /// Blocking: runs hyperfine for one command, killing it after `job.timeout`.
 pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
     let nanos = SystemTime::now()
@@ -217,21 +225,21 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
         std::env::temp_dir().join(format!("benchlab-{}-{}.json", std::process::id(), nanos));
 
     let mut cmd = Command::new(hyperfine);
-    cmd.arg("--export-json").arg(&json_path);
+    cmd.arg(flag("export-json", json_path.as_os_str()));
     if let Some(n) = job.runs {
-        cmd.arg("--runs").arg(n.to_string());
+        cmd.arg(flag("runs", n.to_string().as_ref()));
     }
     if let Some(n) = job.warmup.filter(|n| *n > 0) {
-        cmd.arg("--warmup").arg(n.to_string());
+        cmd.arg(flag("warmup", n.to_string().as_ref()));
     }
     if let Some(name) = job.name {
-        cmd.arg("--command-name").arg(name);
+        cmd.arg(flag("command-name", name.as_ref()));
     }
     if let Some(s) = job.setup {
-        cmd.arg("--setup").arg(s);
+        cmd.arg(flag("setup", s.as_ref()));
     }
     if let Some(c) = job.cleanup {
-        cmd.arg("--cleanup").arg(c);
+        cmd.arg(flag("cleanup", c.as_ref()));
     }
     cmd.arg("--").arg(job.command);
     if let Some(dir) = job.working_dir.filter(|d| !d.trim().is_empty()) {
