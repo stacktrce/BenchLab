@@ -1,0 +1,79 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs"><strong>Quick run</strong></div>
+  </div>
+
+  <p class="muted intro">Time a single command once, without saving it. For anything you will repeat, make a suite.</p>
+
+  @if (hyperfineError(); as err) {
+    <div class="note error" role="alert">
+      <p>{{ err }}</p>
+      <button type="button" class="quiet retry" (click)="checkHyperfine()">Check again</button>
+    </div>
+  }
+
+  <form (submit)="$event.preventDefault(); review()">
+    <label class="field">
+      <span>Command</span>
+      <input class="mono" name="command" [(ngModel)]="command" [disabled]="phase() !== 'editing'"
+             placeholder='node -e "JSON.parse(1)"' autocomplete="off" spellcheck="false" />
+    </label>
+    <div class="pair">
+      <label class="field">
+        <span>Runs</span>
+        <input class="num narrow" name="runs" type="number" min="1" [(ngModel)]="runs" [disabled]="phase() !== 'editing'" />
+      </label>
+      <label class="field grow">
+        <span>Working directory <span class="faint">(optional)</span></span>
+        <input class="mono" name="cwd" [(ngModel)]="workingDir" [disabled]="phase() !== 'editing'" spellcheck="false" />
+      </label>
+    </div>
+    <div class="row-actions">
+      <button type="submit" class="run" [disabled]="!canReview()">
+        <app-icon name="play" /> Review and run
+      </button>
+      @if (phase() === "running") {
+        <button type="button" class="danger" (click)="cancelRun()">Cancel</button>
+        <span class="muted" aria-live="polite">Running…</span>
+      }
+    </div>
+  </form>
+
+  @if (outcome(); as o) {
+    @if (o.kind === "success") {
+      <section class="section">
+        <header><h2>Result</h2></header>
+        <app-results-table [cases]="o.result.cases" />
+      </section>
+    } @else {
+      <div class="note error" role="alert">
+        <p><strong>{{ o.message }}</strong></p>
+        @if (o.output; as out) {
+          <p class="muted">Exit code {{ out.exitCode ?? "none" }}</p>
+          @if (out.stdout) { <pre>{{ out.stdout }}</pre> }
+          @if (out.stderr) { <pre>{{ out.stderr }}</pre> }
+        }
+      </div>
+    }
+  }
+
+  @if (api.suites().length === 0) {
+    <section class="section">
+      <header><h2>New here?</h2></header>
+      <div class="empty">
+        <p>Load a sample suite with two finished runs to see history, comparison and export without running anything.</p>
+        <button type="button" class="quiet" (click)="loadDemo()">Load sample data</button>
+      </div>
+    </section>
+  }
+</div>
+
+@if (phase() === "confirming") {
+  <app-run-confirm
+    heading="Run this command?"
+    [items]="[{ command: command, workingDirectory: workingDir.trim() || null }]"
+    [summary]="runs + ' timed runs'"
+    (confirmed)="confirm()"
+    (cancelled)="cancel()"
+  />
+}

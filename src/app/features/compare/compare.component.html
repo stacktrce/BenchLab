@@ -1,0 +1,169 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs">
+      @if (candidateRun(); as c) {
+        <a [routerLink]="['/suites', c.record.suiteId]">{{ c.record.suiteName }}</a>
+        <span class="faint">/</span>
+      }
+      <strong>Compare runs</strong>
+    </div>
+    @if (rows().length) {
+      <div class="row-actions">
+        <button type="button" class="bare" (click)="copyMarkdown()"><app-icon name="copy" /> Copy</button>
+        <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
+        <button type="button" class="bare" (click)="saveCsv()"><app-icon name="download" /> CSV</button>
+      </div>
+    }
+  </div>
+
+  @if (candidateRun(); as cand) {
+    <div class="pickers">
+      <label>
+        <span>Baseline</span>
+        <select (change)="pick('baseline', $event)">
+          @for (r of runs(); track r.id) {
+            <option [value]="r.id" [selected]="r.id === baselineRun()?.record?.id" [disabled]="r.id === cand.record.id">
+              {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}
+            </option>
+          }
+        </select>
+      </label>
+      <button type="button" class="bare swap" (click)="swap()" [disabled]="!baselineRun()"
+              aria-label="Swap baseline and candidate" title="Swap">
+        <app-icon name="swap" />
+      </button>
+      <label>
+        <span>Candidate</span>
+        <select (change)="pick('candidate', $event)">
+          @for (r of runs(); track r.id) {
+            <option [value]="r.id" [selected]="r.id === cand.record.id" [disabled]="r.id === baselineRun()?.record?.id">
+              {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  @if (versionMismatch()) {
+    <div class="note warn" role="status">
+      The runs used different hyperfine versions, so they may not be directly comparable.
+    </div>
+  }
+  @if (configChanges().length) {
+    <div class="note warn" role="status">
+      <p><strong>The runs were configured differently</strong></p>
+      @for (c of configChanges(); track c) {
+        <p>{{ c }}</p>
+      }
+    </div>
+  }
+  @if (message(); as m) {
+    <div class="note error" role="alert">{{ m }}</div>
+  }
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+
+  @if (rows().length) {
+    @let s = summary();
+    <p class="headline">
+      <span [class.on]="s.faster" class="good-t">{{ s.faster }} faster</span>
+      <span [class.on]="s.slower" class="bad-t">{{ s.slower }} slower</span>
+      <span>{{ s.inconclusive }} within noise</span>
+      @if (s.unmatched) {
+        <span>{{ s.unmatched }} unmatched</span>
+      }
+    </p>
+
+    @if (rows().length > 8) {
+      <label class="check filter">
+        <input type="checkbox" [checked]="hideNoise()" (change)="hideNoise.set(!hideNoise()); limit.set(pageSize)" />
+        Hide cases within noise ({{ shown().length }} of {{ rows().length }} shown)
+      </label>
+    }
+
+    <table>
+      <thead>
+        <tr>
+          <th>Case</th>
+          <th class="strip-col">Baseline above, candidate below</th>
+          <th class="r">Change</th>
+          <th>95% interval</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of visibleRows(); track row.name) {
+          <tr>
+            <td>
+              <div>{{ row.name }}</div>
+              @if (row.kind === "baseline-only") { <div class="faint">Only in the baseline run</div> }
+              @if (row.kind === "candidate-only") { <div class="faint">Only in the candidate run</div> }
+            </td>
+            <td class="strip-col">
+              <div class="strips">
+                @if (row.baseline; as b) {
+                  <app-range-strip class="base" [min]="b.min" [max]="b.max" [mean]="b.mean" [median]="b.median"
+                                   [stddev]="b.stddev" [domain]="domain(row)" />
+                }
+                @if (row.candidate; as c) {
+                  <app-range-strip class="cand" [min]="c.min" [max]="c.max" [mean]="c.mean" [median]="c.median"
+                                   [stddev]="c.stddev" [domain]="domain(row)" />
+                }
+              </div>
+              <div class="means num faint">
+                {{ row.baseline ? ms(row.baseline.mean) : "—" }} → {{ row.candidate ? ms(row.candidate.mean) : "—" }}
+                · n={{ row.baseline?.samples ?? "—" }}/{{ row.candidate?.samples ?? "—" }}
+              </div>
+            </td>
+            <td class="r num">
+              @if (row.kind === "matched") {
+                <div class="strong" [class.good-t]="row.verdict === 'faster'" [class.bad-t]="row.verdict === 'slower'">
+                  {{ percent(row.deltaPercent) }}
+                </div>
+                <div class="faint">{{ signedMs(row.deltaSeconds) }}</div>
+              } @else { — }
+            </td>
+            <td class="num">
+              @if (row.deltaPercentInterval; as ci) {
+                {{ percent(ci.low) }} to {{ percent(ci.high) }}
+              } @else { <span class="faint">not available</span> }
+            </td>
+            <td>
+              @switch (row.verdict) {
+                @case ("faster") { <span class="good-t strong">Faster</span> }
+                @case ("slower") { <span class="bad-t strong">Slower</span> }
+                @case ("inconclusive") { <span class="faint">Within noise</span> }
+                @default { <span class="faint">—</span> }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (hiddenCount() > 0) {
+      <button type="button" class="quiet more" (click)="limit.set(limit() + pageSize)">
+        Show {{ Math.min(hiddenCount(), pageSize) }} more ({{ hiddenCount() }} hidden)
+      </button>
+    }
+
+    @if (flagged().length) {
+      <div class="note warn">
+        <p><strong>Read these with care</strong></p>
+        @for (row of flagged(); track row.name) {
+          @for (cv of row.caveats; track cv) {
+            <p><span class="strong">{{ row.name }}:</span> {{ cv }}</p>
+          }
+        }
+      </div>
+    }
+
+    <p class="faint method">
+      Change is candidate minus baseline, so negative is faster. A case is called faster or slower only when the
+      95% interval of the difference (from the reported standard deviations and run counts) excludes zero.
+      Otherwise it is shown as within noise. Strips share one axis per case, starting at 0.
+    </p>
+  }
+</div>

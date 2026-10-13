@@ -1,0 +1,149 @@
+.title,
+.subtitle {
+  display: block;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+}
+
+.title {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  color: var(--ink-2);
+}
+
+.title:hover,
+.subtitle:hover {
+  border-bottom-color: var(--line);
+}
+
+.title:focus,
+.subtitle:focus {
+  border-bottom-color: var(--line-strong);
+  outline: none;
+}
+
+.settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 14px 0 6px;
+}
+
+.settings label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.narrow {
+  width: 64px;
+}
+
+.tabs {
+  display: flex;
+  gap: 18px;
+  margin-top: 18px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.tabs button {
+  padding: 6px 0;
+  color: var(--ink-2);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+}
+
+.tabs button.on {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.cases {
+  display: flex;
+  flex-direction: column;
+}
+
+.case {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.case.off .body {
+  opacity: 0.5;
+}
+
+.index {
+  padding-top: 6px;
+  text-align: right;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.case-name {
+  font-weight: 500;
+}
+
+.case-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 0 0;
+}
+
+summary {
+  color: var(--ink-3);
+  cursor: pointer;
+  width: fit-content;
+}
+
+summary:hover {
+  color: var(--ink);
+}
+
+.hooks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.hooks label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.add {
+  margin-top: 12px;
+}
+
+.dirty {
+  margin-top: 8px;
+}

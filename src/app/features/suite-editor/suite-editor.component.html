@@ -1,0 +1,149 @@
+<div class="page">
+  @if (loadError(); as err) {
+    <div class="page-bar"><div class="crumbs"><strong>Suite</strong></div></div>
+    <div class="note error" role="alert">{{ err }}</div>
+  } @else {
+    <div class="page-bar">
+      <div class="crumbs">
+        <span>Suites</span>
+        <span class="faint">/</span>
+        <strong>{{ saved()?.name || "New suite" }}</strong>
+      </div>
+      <div class="row-actions">
+        @if (saved()) {
+          <button type="button" class="bare" (click)="duplicate()"><app-icon name="copy" /> Duplicate</button>
+          @if (confirmingDelete()) {
+            <button type="button" class="danger" (click)="remove()">Delete suite and its runs</button>
+            <button type="button" class="quiet" (click)="confirmingDelete.set(false)">Keep</button>
+          } @else {
+            <button type="button" class="bare" (click)="confirmingDelete.set(true)" aria-label="Delete suite">
+              <app-icon name="trash" />
+            </button>
+          }
+        }
+        <button type="submit" form="suite-form" class="quiet" [disabled]="busy() !== ''" title="Ctrl+S">
+          {{ busy() === "saving" ? "Saving…" : "Save" }}
+        </button>
+        @if (saved()) {
+          @if (busy() === "running") {
+            <button type="button" class="danger" (click)="cancelRun()">Cancel run</button>
+          } @else {
+            <button type="button" class="run" (click)="confirmingRun.set(true)" [disabled]="!canRun()"
+                    [title]="runBlockedReason() || 'Ctrl+Enter'">
+              <app-icon name="play" /> Run
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    @if (problems().length) {
+      <div class="note error" role="alert">
+        @for (p of problems(); track $index) {
+          <p>{{ p }}</p>
+        }
+      </div>
+    }
+
+    <form id="suite-form" [formGroup]="form" (ngSubmit)="save()">
+      <input class="title" formControlName="name" placeholder="Suite name" aria-label="Suite name" autocomplete="off" />
+      <input class="subtitle" formControlName="description" placeholder="What does this suite measure?"
+             aria-label="Description" autocomplete="off" />
+
+      <div class="settings">
+        <label>
+          Timed runs per case
+          <input class="num narrow" type="number" min="1" formControlName="runs" />
+        </label>
+        <label>
+          Warm-up runs
+          <input class="num narrow" type="number" min="0" formControlName="warmup" />
+        </label>
+        <span class="faint">Warm-up runs are not timed. They fill file and CPU caches so the first measurement is not an outlier.</span>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" [attr.aria-selected]="tab() === 'cases'" [class.on]="tab() === 'cases'"
+                (click)="tab.set('cases')">Cases <span class="num faint">{{ cases.length }}</span></button>
+        @if (saved()) {
+          <button type="button" role="tab" [attr.aria-selected]="tab() === 'history'" [class.on]="tab() === 'history'"
+                  (click)="tab.set('history')">History <span class="num faint">{{ runs().length }}</span></button>
+        }
+      </div>
+
+      @if (tab() === "cases") {
+        <div formArrayName="cases" class="cases">
+          @for (c of cases.controls; track c; let i = $index) {
+            <div class="case" [formGroupName]="i" [class.off]="!c.value.enabled">
+              <span class="index num faint">{{ i + 1 }}</span>
+              <div class="body">
+                <input class="case-name" formControlName="name" placeholder="Case name"
+                       [attr.aria-label]="'Name of case ' + (i + 1)" autocomplete="off" />
+                <input class="mono" formControlName="command" placeholder="command to time"
+                       [attr.aria-label]="'Command of case ' + (i + 1)" autocomplete="off" spellcheck="false" />
+                <details>
+                  <summary>Setup, cleanup and directory</summary>
+                  <div class="hooks">
+                    <label>Setup <span class="faint">runs once before timing</span>
+                      <input class="mono" formControlName="setupCommand" spellcheck="false" />
+                    </label>
+                    <label>Cleanup <span class="faint">runs after timing</span>
+                      <input class="mono" formControlName="cleanupCommand" spellcheck="false" />
+                    </label>
+                    <label>Working directory
+                      <input class="mono" formControlName="workingDirectory" spellcheck="false" />
+                    </label>
+                  </div>
+                </details>
+              </div>
+              <div class="case-tools">
+                <label class="check" title="Disabled cases are skipped when running">
+                  <input type="checkbox" formControlName="enabled" />
+                  <span class="faint">on</span>
+                </label>
+                <button type="button" class="bare" (click)="move(i, -1)" [disabled]="i === 0" aria-label="Move up"><app-icon name="up" /></button>
+                <button type="button" class="bare" (click)="move(i, 1)" [disabled]="i === cases.length - 1" aria-label="Move down"><app-icon name="down" /></button>
+                <button type="button" class="bare" (click)="removeCase(i)" aria-label="Remove case"><app-icon name="close" /></button>
+              </div>
+            </div>
+          }
+        </div>
+        <button type="button" class="quiet add" (click)="addCase()"><app-icon name="plus" /> Add case</button>
+        @if (form.dirty && saved()) {
+          <p class="faint dirty">Unsaved changes. Save before running.</p>
+        }
+      } @else {
+        @if (runs().length === 0) {
+          <div class="empty"><strong>No runs yet</strong>Press Run to time this suite.</div>
+        } @else {
+          <table>
+            <thead>
+              <tr><th>Started</th><th>Status</th><th class="r">Cases</th><th>Tool</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (r of runs(); track r.id) {
+                <tr>
+                  <td><a [routerLink]="['/runs', r.id]">{{ r.startedAt | date: "MMM d, y, HH:mm" }}</a></td>
+                  <td><span class="status" [class]="r.status">{{ r.status }}</span></td>
+                  <td class="r num">{{ r.caseCount }}</td>
+                  <td class="muted">{{ r.toolVersion }}</td>
+                  <td class="r"><a [routerLink]="['/compare']" [queryParams]="{ candidate: r.id }">Compare with previous</a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </form>
+  }
+</div>
+
+@if (confirmingRun()) {
+  <app-run-confirm
+    [heading]="'Run “' + saved()?.name + '”?'"
+    [items]="confirmItems()"
+    [summary]="confirmSummary()"
+    (confirmed)="runConfirmed()"
+    (cancelled)="confirmingRun.set(false)"
+  />
+}

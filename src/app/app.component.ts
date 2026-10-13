@@ -1,0 +1,45 @@
+import { DatePipe } from "@angular/common";
+import { Component, computed, inject, signal } from "@angular/core";
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { BenchmarkRunnerService } from "./core/benchmark-runner.service";
+import { ToolInfo } from "./core/parser/hyperfine.types";
+import { SuiteApiService } from "./core/suite-api.service";
+import { ThemeService } from "./core/theme.service";
+import { ToastService } from "./core/toast.service";
+import { IconComponent } from "./shared/icon.component";
+
+@Component({
+  selector: "app-root",
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, IconComponent],
+  templateUrl: "./app.component.html",
+  styleUrl: "./app.component.css",
+})
+export class AppComponent {
+  protected readonly api = inject(SuiteApiService);
+  protected readonly toast = inject(ToastService);
+  protected readonly themeService = inject(ThemeService);
+  private readonly router = inject(Router);
+  private readonly runner = inject(BenchmarkRunnerService);
+
+  protected readonly tool = signal<ToolInfo | null>(null);
+  protected readonly toolError = signal<string | null>(null);
+
+  protected readonly themeIcon = computed(() => (this.themeService.theme() === "dark" ? "moon" : "sun"));
+
+  constructor() {
+    this.runner
+      .findHyperfine()
+      .then((t) => this.tool.set(t))
+      .catch((e) => this.toolError.set(String(e)));
+    this.api.refresh().catch((e) => this.toast.show(`Could not load suites: ${e}`, "error"));
+  }
+
+  protected async loadDemo(): Promise<void> {
+    try {
+      const id = await this.api.loadDemo();
+      await this.router.navigate(["/suites", id]);
+    } catch (e) {
+      this.toast.show(`Could not load sample data: ${e}`, "error");
+    }
+  }
+}

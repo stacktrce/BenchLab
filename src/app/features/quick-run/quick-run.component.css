@@ -1,0 +1,41 @@
+.intro {
+  margin-bottom: 16px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field > span:first-child {
+  font-weight: 500;
+}
+
+.pair {
+  display: flex;
+  gap: 16px;
+}
+
+.grow {
+  flex: 1;
+}
+
+.narrow {
+  width: 90px;
+}
+
+.retry {
+  margin-top: 6px;
+}
+
+.empty p {
+  margin-bottom: 10px;
+  max-width: 52ch;
+}

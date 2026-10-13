@@ -1,0 +1,50 @@
+<div class="page">
+  @if (detail(); as d) {
+    <div class="page-bar">
+      <div class="crumbs">
+        <a [routerLink]="['/suites', d.record.suiteId]">{{ d.record.suiteName }}</a>
+        <span class="faint">/</span>
+        <strong>{{ d.record.startedAt | date: "MMM d, y, HH:mm" }}</strong>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="bare" (click)="copyMarkdown()" title="Copy as Markdown">
+          <app-icon name="copy" /> Copy
+        </button>
+        <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
+        <button type="button" class="bare" (click)="saveCsv()" [disabled]="!result()"><app-icon name="download" /> CSV</button>
+        <button type="button" class="quiet" [routerLink]="['/compare']" [queryParams]="{ candidate: d.record.id }">
+          <app-icon name="swap" /> Compare
+        </button>
+      </div>
+    </div>
+
+    <p class="muted meta">
+      <span class="status" [class]="d.record.status">{{ d.record.status }}</span>
+      · {{ durationSeconds(d).toFixed(1) }} s
+      · {{ d.record.caseCount }} case(s)
+      · {{ d.record.toolVersion }}
+    </p>
+
+    @if (d.record.error) {
+      <div class="note error" role="alert">
+        <p><strong>Some cases did not complete</strong></p>
+        <pre>{{ d.record.error }}</pre>
+      </div>
+    }
+    @if (error(); as err) {
+      <div class="note error" role="alert">{{ err }}</div>
+    }
+    @if (result(); as r) {
+      <section class="section">
+        <header><h2>Results</h2></header>
+        <app-results-table [cases]="r.cases" />
+      </section>
+    }
+  } @else if (error(); as err) {
+    <div class="page-bar"><div class="crumbs"><strong>Run</strong></div></div>
+    <div class="note error" role="alert">{{ err }}</div>
+  } @else {
+    <div class="page-bar"><div class="crumbs"><strong>Run</strong></div></div>
+    <p class="muted">Loading…</p>
+  }
+</div>

@@ -1,0 +1,73 @@
+<div class="shell">
+  <nav class="sidebar" aria-label="Main">
+    <div class="top">
+      <span class="wordmark">BenchLab</span>
+      <button
+        type="button" class="bare" (click)="themeService.cycle()"
+        [attr.aria-label]="'Theme: ' + themeService.theme() + '. Click to change.'"
+        [title]="'Theme: ' + themeService.theme()"
+      >
+        <app-icon [name]="themeIcon()" />
+      </button>
+    </div>
+
+    <a class="item" routerLink="/suites/new" routerLinkActive="active">
+      <app-icon name="plus" /> New suite
+    </a>
+    <a class="item" routerLink="/quick" routerLinkActive="active">
+      <app-icon name="scratch" /> Quick run
+    </a>
+
+    <div class="label">Suites</div>
+    <div class="list">
+      @for (s of api.suites(); track s.id) {
+        <a class="item sub" [routerLink]="['/suites', s.id]" routerLinkActive="active" [title]="s.name">
+          <span class="grow">{{ s.name }}</span>
+          <span class="num faint">{{ s.caseCount }}</span>
+        </a>
+      } @empty {
+        <div class="hint">No suites yet.</div>
+        <button type="button" class="quiet load-demo" (click)="loadDemo()">Load sample data</button>
+      }
+    </div>
+
+    <div class="label">Recent runs</div>
+    <div class="list">
+      @for (r of api.recentRuns(); track r.id) {
+        <a class="item sub" [routerLink]="['/runs', r.id]" routerLinkActive="active"
+           [title]="r.suiteName + ' (' + r.status + ')'">
+          <span class="dot" [class]="r.status"></span>
+          <span class="num">{{ r.startedAt | date: "MMM d, HH:mm" }}</span>
+          <span class="grow faint">{{ r.suiteName }}</span>
+        </a>
+      } @empty {
+        <div class="hint">No runs yet.</div>
+      }
+    </div>
+
+    <div class="grow-space"></div>
+    <div class="tool" [class.bad]="toolError()" [title]="toolError() ?? tool()?.path ?? ''">
+      <span class="dot" [class.failed]="toolError()" [class.completed]="tool()"></span>
+      @if (toolError()) {
+        <span>hyperfine not found</span>
+      } @else if (tool(); as t) {
+        <span>{{ t.version }} <span class="faint">· {{ t.source === "bundled" ? "bundled" : t.source === "override" ? "override" : "system" }}</span></span>
+      } @else {
+        <span class="faint">checking hyperfine…</span>
+      }
+    </div>
+  </nav>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
+
+@if (toast.current(); as t) {
+  <div class="toast" [class.error]="t.kind === 'error'" [attr.role]="t.kind === 'error' ? 'alert' : 'status'">
+    <span>{{ t.text }}</span>
+    <button type="button" class="bare" (click)="toast.dismiss()" aria-label="Dismiss">
+      <app-icon name="close" />
+    </button>
+  </div>
+}
