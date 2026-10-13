@@ -111,7 +111,14 @@ cd .. && npm run tauri build                    # only when touching bundling, t
 
 `npm run fetch:hyperfine` must have run once so `cargo` can find the sidecar.
 
-For UI changes, look at it. Start `npm start`, load the page in headless Edge or Chrome with a mocked `window.__TAURI_INTERNALS__`, and read the screenshot in both themes. Code that compiles can still look wrong.
+For UI changes, run the audit and look at the result:
+
+```sh
+npm run audit:ui                        # axe (WCAG AA) on nine screens in both themes, keyboard and focus checks
+npm run audit:ui -- --shots tmp/shots   # also writes a PNG per screen and theme; open them and read them
+```
+
+It starts the dev server if needed, renders the app in headless Chrome or Edge (set `CHROME_PATH` if neither is found) with a mocked Tauri bridge (`scripts/ui-audit/mock-tauri.mjs`), and exits 1 on any failure. Add a screen to `SCREENS` in `scripts/ui-audit/audit.mjs` when you add a page or a dialog. Passing axe is necessary, not sufficient: code that compiles and passes can still look wrong, so read the screenshots.
 
 ## 7. Product rules that must not regress
 

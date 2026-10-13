@@ -82,6 +82,7 @@ Requirements: Node (developed on 26), Rust (stable), and the [Tauri prerequisite
 npm install
 npm run tauri dev      # fetches the pinned hyperfine sidecar first, then starts the app
 npm test               # parser, comparison, export and validation tests
+npm run audit:ui       # accessibility (axe) and keyboard checks of every screen, in headless Chrome or Edge
 cd src-tauri && cargo test   # database, runner, cancellation (uses the real hyperfine)
 npm run tauri build    # installer in src-tauri/target/release/bundle
 ```
