@@ -3,6 +3,7 @@ import { Component, effect, inject, input, signal, untracked } from "@angular/co
 import { RouterLink } from "@angular/router";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { runToCsv, runToMarkdown } from "../../core/export";
+import { describeGit } from "../../core/format";
 import { RunDetail } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
@@ -17,6 +18,8 @@ import { ResultsTableComponent } from "../../shared/results-table.component";
 })
 export class RunDetailComponent {
   readonly id = input.required<string>();
+
+  protected readonly describeGit = describeGit;
 
   private readonly api = inject(SuiteApiService);
   private readonly files = inject(FileExportService);
@@ -57,7 +60,7 @@ export class RunDetailComponent {
 
   private markdown(): string | null {
     const d = this.detail();
-    return d ? runToMarkdown(d.record, this.result(), d.config) : null;
+    return d ? runToMarkdown(d.record, this.result(), d.config, d.git) : null;
   }
 
   saveMarkdown(): void {

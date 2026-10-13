@@ -24,6 +24,14 @@
       · {{ d.record.caseCount }} case(s)
       · {{ d.record.toolVersion }}
     </p>
+    @for (g of d.git; track g.root) {
+      <p class="muted meta" [title]="g.root">
+        Code: <span class="mono">{{ describeGit(g) }}</span>
+        @if (d.git.length > 1) {
+          <span class="faint">in {{ g.root }}</span>
+        }
+      </p>
+    }
 
     @if (d.record.error) {
       <div class="note error" role="alert">

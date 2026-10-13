@@ -1,4 +1,5 @@
 use crate::db::{Db, now_iso, sql_err};
+use crate::git::{self, GitInfo};
 use crate::hyperfine::{self, Job, RunControl};
 use crate::suites::{Suite, load_suite};
 use rusqlite::{Connection, OptionalExtension, params};
@@ -30,6 +31,9 @@ pub struct RunDetail {
     pub record: RunRecord,
     /// Suite configuration at run time; absent for runs recorded before snapshots existed.
     pub config: Option<Suite>,
+    /// Repositories the cases ran in, as they were when the run started. Empty when no case has a
+    /// working directory inside a git repository, and for runs recorded before this was captured.
+    pub git: Vec<GitInfo>,
     /// Merged hyperfine JSON for the cases that completed.
     pub raw_output: Option<String>,
 }
@@ -38,6 +42,7 @@ pub struct SuiteOutcome {
     pub results: Vec<serde_json::Value>,
     pub errors: Vec<String>,
     pub case_count: i64,
+    pub git: Vec<GitInfo>,
 }
 
 pub const CANCELLED_MESSAGE: &str = "Cancelled by user. Remaining cases were not run.";
@@ -71,10 +76,19 @@ fn execute_suite(
     suite: &Suite,
     cancel: &AtomicBool,
 ) -> SuiteOutcome {
+    // Captured before anything runs: it must describe the code the benchmarks measured.
+    let git = git::capture_all(
+        suite
+            .cases
+            .iter()
+            .filter(|c| c.enabled)
+            .filter_map(|c| c.working_directory.as_deref()),
+    );
     let mut outcome = SuiteOutcome {
         results: Vec::new(),
         errors: Vec::new(),
         case_count: 0,
+        git,
     };
     for case in suite.cases.iter().filter(|c| c.enabled) {
         if cancel.load(Ordering::SeqCst) {
@@ -167,10 +181,12 @@ pub fn insert_run(
     let error = (!outcome.errors.is_empty()).then(|| outcome.errors.join("\n"));
     let raw = outcome.raw_output();
     let config = serde_json::to_string(suite).map_err(|e| format!("Cannot snapshot suite: {e}"))?;
+    let git =
+        serde_json::to_string(&outcome.git).map_err(|e| format!("Cannot store git state: {e}"))?;
     conn.execute(
         "INSERT INTO runs (id, suite_id, suite_name, started_at, finished_at, status,
-                           tool_version, case_count, error, raw_output, config_json)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                           tool_version, case_count, error, raw_output, config_json, git_json)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         params![
             id,
             suite.id,
@@ -182,7 +198,8 @@ pub fn insert_run(
             outcome.case_count,
             error,
             raw,
-            config
+            config,
+            git
         ],
     )
     .map_err(sql_err)?;
@@ -191,14 +208,20 @@ pub fn insert_run(
 
 pub fn get_run(conn: &Connection, id: &str) -> Result<RunDetail, String> {
     conn.query_row(
-        &format!("SELECT {RECORD_COLUMNS}, raw_output, config_json FROM runs WHERE id = ?1"),
+        &format!(
+            "SELECT {RECORD_COLUMNS}, raw_output, config_json, git_json FROM runs WHERE id = ?1"
+        ),
         [id],
         |r| {
             let config: Option<String> = r.get(10)?;
+            let git: Option<String> = r.get(11)?;
             Ok(RunDetail {
                 record: row_to_record(r)?,
                 raw_output: r.get(9)?,
                 config: config.and_then(|c| serde_json::from_str(&c).ok()),
+                git: git
+                    .and_then(|g| serde_json::from_str(&g).ok())
+                    .unwrap_or_default(),
             })
         },
     )
@@ -307,6 +330,7 @@ mod tests {
                 .collect(),
             errors: (0..errors).map(|i| format!("e{i}")).collect(),
             case_count: (results + errors) as i64,
+            git: Vec::new(),
         }
     }
 
@@ -500,6 +524,72 @@ mod tests {
         );
     }
 
+    /// Needs real hyperfine and git. The state is captured when the run starts, so a change made
+    /// to the repository after that must not show up in the record.
+    #[test]
+    fn a_suite_run_records_the_git_state_of_its_working_directories() {
+        let Ok(hf) = hyperfine::locate_hyperfine() else {
+            return;
+        };
+        let git = |dir: &std::path::Path, args: &[&str]| {
+            std::process::Command::new("git")
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@example.com",
+                    "-c",
+                    "commit.gpgsign=false",
+                ])
+                .args(args)
+                .current_dir(dir)
+                .output()
+        };
+        let repo = std::env::temp_dir().join(format!("benchlab-run-git-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&repo);
+        std::fs::create_dir_all(&repo).unwrap();
+        if git(&repo, &["init", "-q", "-b", "main"]).is_err() {
+            return; // git is not installed
+        }
+        std::fs::write(repo.join("f.txt"), "1").unwrap();
+        git(&repo, &["add", "f.txt"]).unwrap();
+        git(&repo, &["commit", "-q", "-m", "c"]).unwrap();
+        let head = String::from_utf8(git(&repo, &["rev-parse", "HEAD"]).unwrap().stdout).unwrap();
+
+        let case = |name: &str, dir: Option<&str>| Case {
+            id: String::new(),
+            name: name.into(),
+            command: "echo hi".into(),
+            setup_command: None,
+            cleanup_command: None,
+            working_directory: dir.map(Into::into),
+            enabled: true,
+        };
+        let repo_dir = repo.to_str().unwrap();
+        let suite = Suite {
+            id: String::new(),
+            name: "S".into(),
+            description: String::new(),
+            runs: 2,
+            warmup: 0,
+            schema_version: 1,
+            created_at: String::new(),
+            updated_at: String::new(),
+            // two cases in one repo and one with no directory: one record, not three
+            cases: vec![
+                case("a", Some(repo_dir)),
+                case("b", Some(repo_dir)),
+                case("c", None),
+            ],
+        };
+        let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
+        assert_eq!(out.status(), "completed");
+        assert_eq!(out.git.len(), 1);
+        assert_eq!(out.git[0].commit, head.trim());
+        assert!(!out.git[0].dirty);
+        let _ = std::fs::remove_dir_all(repo);
+    }
+
     #[test]
     fn only_one_run_at_a_time_and_cancel_reaches_it() {
         let control = RunControl::default();
@@ -513,6 +603,32 @@ mod tests {
             control.begin().is_ok(),
             "slot is released when the run ends"
         );
+    }
+
+    #[test]
+    fn run_stores_git_state_and_older_runs_have_none() {
+        let conn = memory();
+        let suite = saved_suite(&conn);
+        let mut o = outcome(1, 0);
+        o.git = vec![GitInfo {
+            dir: "/code/app".into(),
+            root: "/code/app".into(),
+            commit: "9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c".into(),
+            short_commit: "9f2c1d4".into(),
+            branch: Some("main".into()),
+            dirty: true,
+            changed_files: 3,
+        }];
+        let run = insert_run(&conn, &suite, "2026-01-01T00:00:00.000Z", "v", &o).unwrap();
+        let stored = get_run(&conn, &run.record.id).unwrap().git;
+        assert_eq!(stored, o.git);
+
+        conn.execute(
+            "UPDATE runs SET git_json = NULL WHERE id = ?1",
+            [&run.record.id],
+        )
+        .unwrap();
+        assert!(get_run(&conn, &run.record.id).unwrap().git.is_empty());
     }
 
     #[test]

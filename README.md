@@ -11,7 +11,7 @@ A desktop app for the question hyperfine leaves to you: **did my change make it 
 | | hyperfine alone | BenchLab |
 |---|---|---|
 | Rerun the same benchmark later | Retype or script the command line | Saved suite: cases, setup, cleanup, working directory, runs, warm-up |
-| Remember past results | Whatever you saved by hand | Every run stored with its raw output and a snapshot of the suite configuration |
+| Remember past results | Whatever you saved by hand | Every run stored with its raw output, a snapshot of the suite configuration, and the git commit it measured |
 | Compare two runs | Eyeball two terminal outputs | Per-case change with a 95% interval, a verdict, and caveats |
 | Share results | Copy text | Markdown and CSV export, copy as Markdown |
 | Install | Separate | Ships its own hyperfine |
@@ -50,6 +50,7 @@ Change is candidate minus baseline, so negative is faster.
 - A case is called **faster** or **slower** only when the 95% interval of the difference excludes zero. The interval comes from the standard deviation and run count hyperfine reports for each side (a Welch-style test). Anything else is **within noise**.
 - Strips show min to max, mean plus or minus one standard deviation, the mean and the median, on one shared axis starting at zero.
 - Per-case notes flag: fewer than 5 timed runs, no standard deviation, non-zero exit codes, and a first run at least 1.5 times the median (a likely cold cache; use warm-up runs).
+- If a case runs inside a git repository (its working directory is set), the run records the branch, commit and whether there were uncommitted changes when it started. A comparison says when both runs used the same commit (so any difference is noise or the environment) and warns when either ran with uncommitted changes, since the commit then does not fully describe the code.
 - Above the table, BenchLab lists configuration differences between the two runs: timed runs, warm-up, a changed command, setup, cleanup or directory, and a different hyperfine version.
 
 ![A single run](docs/screenshots/light-run.png)
@@ -69,6 +70,7 @@ BenchLab executes the commands you write, through hyperfine's shell, with your u
 - Commands reach hyperfine as single arguments; BenchLab never builds shell strings itself.
 - Exports are written only to `.md`, `.csv` or `.txt` paths chosen in the system save dialog. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
 - Only one benchmark runs at a time, because parallel runs distort each other's timings.
+- To record the code state, BenchLab runs read-only git commands (`rev-parse`, `symbolic-ref`, `status`) in each case's working directory, with the fsmonitor hook disabled so a repository's own config cannot make it run a program. If git is missing or the directory is not a repository, nothing is recorded and nothing fails.
 
 ## Your data
 
