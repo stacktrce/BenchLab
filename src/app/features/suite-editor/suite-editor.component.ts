@@ -2,6 +2,7 @@ import { DatePipe } from "@angular/common";
 import { Component, effect, inject, input, signal, untracked } from "@angular/core";
 import { FormArray, NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
+import { Latest } from "../../core/latest";
 import { RunRecord, Suite, SuiteCase } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
@@ -31,6 +32,7 @@ export class SuiteEditorComponent {
   private readonly api = inject(SuiteApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly latestLoad = new Latest();
 
   readonly form = this.fb.group({
     name: this.fb.control(""),
@@ -74,6 +76,7 @@ export class SuiteEditorComponent {
   }
 
   private async load(id: string | undefined): Promise<void> {
+    const isCurrent = this.latestLoad.begin();
     this.problems.set([]);
     this.loadError.set(null);
     this.confirmingDelete.set(false);
@@ -89,11 +92,14 @@ export class SuiteEditorComponent {
     }
     try {
       const suite = await this.api.getSuite(id);
+      if (!isCurrent()) return;
       this.saved.set(suite);
       this.setForm(suite);
       this.form.markAsPristine();
-      this.runs.set(await this.api.listRuns(id));
+      const runs = await this.api.listRuns(id);
+      if (isCurrent()) this.runs.set(runs);
     } catch (e) {
+      if (!isCurrent()) return;
       this.saved.set(null);
       this.loadError.set(String(e));
     }

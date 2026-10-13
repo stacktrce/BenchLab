@@ -5,8 +5,11 @@
 // Commands the app calls that are not listed here reject with "mock: <name>". The audit relies on
 // that to prove, for example, that Ctrl+S reaches the save handler.
 
-/** @param {{ empty: boolean }} options */
-export function tauriMock({ empty }) {
+/**
+ * @param {{ empty: boolean, slow?: boolean }} options  `slow` makes the first suite and run answer late,
+ *   so tests can make a slow response arrive after a fast one.
+ */
+export function tauriMock({ empty, slow = false }) {
   let seed = 7;
   const noise = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
 
@@ -61,6 +64,9 @@ export function tauriMock({ empty }) {
     r2: run("r2", "2026-10-13T11:30:00.000Z", candidate, gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2)),
   };
 
+  const second = { ...suite, id: "s2", name: "Second suite", cases: [suite.cases[0]] };
+  const later = (value, ms) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
+
   window.__TAURI_INTERNALS__ = {
     transformCallback: () => 1,
     invoke: async (command, args) => {
@@ -72,9 +78,10 @@ export function tauriMock({ empty }) {
         case "list_runs_cmd":
           return empty ? [] : [runs.r2.record, runs.r1.record];
         case "get_suite":
-          return suite;
+          if (args.id === "s2") return second;
+          return slow ? later(suite, 800) : suite;
         case "get_run_cmd":
-          return runs[args.id];
+          return slow && args.id === "r1" ? later(runs.r1, 800) : runs[args.id];
         default:
           throw `mock: ${command}`;
       }

@@ -2,6 +2,7 @@ import { DatePipe } from "@angular/common";
 import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
+import { Latest } from "../../core/latest";
 import { runToCsv, runToMarkdown } from "../../core/export";
 import { describeGit } from "../../core/format";
 import { RunDetail, Suite } from "../../core/models";
@@ -25,6 +26,7 @@ export class RunDetailComponent {
   private readonly api = inject(SuiteApiService);
   private readonly files = inject(FileExportService);
   private readonly toast = inject(ToastService);
+  private readonly latestLoad = new Latest();
 
   readonly detail = signal<RunDetail | null>(null);
   readonly result = signal<BenchmarkResult | null>(null);
@@ -44,14 +46,19 @@ export class RunDetailComponent {
   }
 
   private async load(id: string): Promise<void> {
+    const isCurrent = this.latestLoad.begin();
     this.detail.set(null);
     this.result.set(null);
     this.error.set(null);
     this.suite.set(null);
     try {
       const detail = await this.api.getRun(id);
+      if (!isCurrent()) return;
       this.detail.set(detail);
-      this.api.getSuite(detail.record.suiteId).then((s) => this.suite.set(s), () => undefined);
+      this.api.getSuite(detail.record.suiteId).then(
+        (s) => isCurrent() && this.suite.set(s),
+        () => undefined,
+      );
       if (detail.rawOutput) {
         try {
           this.result.set(parseHyperfineJSON(detail.rawOutput));
@@ -60,7 +67,7 @@ export class RunDetailComponent {
         }
       }
     } catch (e) {
-      this.error.set(String(e));
+      if (isCurrent()) this.error.set(String(e));
     }
   }
 

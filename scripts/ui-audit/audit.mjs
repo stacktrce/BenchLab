@@ -96,11 +96,11 @@ function check(ok, message) {
   if (!ok) failures++;
 }
 
-async function openPage(browser, route, { scheme = "light", empty = false } = {}) {
+async function openPage(browser, route, { scheme = "light", empty = false, slow = false } = {}) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1100, height: 720 });
   await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: scheme }]);
-  await page.evaluateOnNewDocument(tauriMock, { empty });
+  await page.evaluateOnNewDocument(tauriMock, { empty, slow });
   await page.goto(BASE + route, { waitUntil: "networkidle0" });
   return page;
 }
@@ -220,12 +220,44 @@ async function auditTabOrder(browser) {
   }
 }
 
+/** In-app navigation without a reload: the Angular router listens for popstate. */
+const navigateInApp = (page, url) =>
+  page.evaluate((u) => {
+    history.pushState({}, "", u);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, url);
+
+/**
+ * Open something slow, then something fast before the first answer arrives. The page must show
+ * what the URL says, not whichever response happened to land last.
+ */
+async function auditOverlappingLoads(browser) {
+  const editor = await openPage(browser, "/quick", { slow: true });
+  await navigateInApp(editor, "/suites/s1"); // answers after 800 ms
+  await new Promise((r) => setTimeout(r, 250)); // the page exists and its request is in flight
+  await navigateInApp(editor, "/suites/s2"); // answers at once
+  await new Promise((r) => setTimeout(r, 1500));
+  const title = await editor.$eval("input.title", (el) => el.value).catch(() => "(no title field)");
+  check(title === "Second suite", `suite page shows the suite in the URL after a slow response arrives late (shows "${title}")`);
+  await editor.close();
+
+  const detail = await openPage(browser, "/quick", { slow: true });
+  await navigateInApp(detail, "/runs/r1"); // answers after 800 ms
+  await new Promise((r) => setTimeout(r, 250));
+  await navigateInApp(detail, "/runs/r2"); // answers at once
+  await new Promise((r) => setTimeout(r, 1500));
+  const heading = await detail.$eval("h1", (el) => el.textContent.trim()).catch(() => "(no heading)");
+  check(heading.startsWith("Oct 13"), `run page shows the run in the URL after a slow response arrives late (shows "${heading}")`);
+  await detail.close();
+}
+
 const server = await ensureServer();
 const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true });
 try {
   await auditAxe(browser);
   await auditDialogKeyboard(browser);
   await auditTabOrder(browser);
+  await auditOverlappingLoads(browser);
 } finally {
   await browser.close();
   if (server) stopServer(server);
