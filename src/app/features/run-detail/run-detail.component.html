@@ -54,6 +54,10 @@
         <header><h2>Results</h2></header>
         <app-results-table [cases]="r.cases" />
       </section>
+      <section class="section">
+        <header><h2>Charts</h2></header>
+        <app-case-charts [sets]="[{ label: 'This run', cases: r.cases, tone: 'plain' }]" />
+      </section>
     }
   } @else if (error(); as err) {
     <div class="page-bar"><div class="crumbs"><h1>Run</h1></div></div>

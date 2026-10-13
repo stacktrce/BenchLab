@@ -12,11 +12,12 @@ import { BenchmarkResult } from "../../core/parser/hyperfine.types";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon.component";
+import { CaseChartsComponent } from "../../shared/charts/case-charts.component";
 import { ResultsTableComponent } from "../../shared/results-table.component";
 
 @Component({
   selector: "app-run-detail",
-  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent],
+  imports: [DatePipe, RouterLink, ResultsTableComponent, CaseChartsComponent, IconComponent],
   templateUrl: "./run-detail.component.html",
 })
 export class RunDetailComponent {
