@@ -107,6 +107,18 @@ Tested on Windows. The macOS and Linux builds are set up in CI (`.github/workflo
 
 Third-party licences: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-## Progress
+### 🚧 Current Development & Roadmap
 
 Currently in Alpha, more features such as Graph Generation, Logging , Live Analysis , History are still in the making and will be implemented. I did (and will continue to) use AI for this project in order to speed up my progress. 
+
+
+- **[P0 — Highest Priority]** Fix terminal launch workflow: prevent terminals from opening sequentially by integrating a shell into BenchLab or launching Hyper sessions silently in the background.
+- **[P1 — High Priority]** Fix the delay when switching between light and dark themes.
+- **[P1 — High Priority]** Fix Hyperfine demo execution (`exit code 1`) and improve error handling.
+- **[P1 — High Priority]** Fix cluttered Excel export formatting.
+- **[P2 — Medium Priority]** Add application logging.
+- **[P2 — Medium Priority]** Implement live progress tracking.
+- **[P2 — Medium Priority]** Add an extended history page.
+- **[P2 — Medium Priority]** Implement chart generation.
+- **[P2 — Medium Priority]** Add customizable themes and UI settings.
+- **[P3 — Low Priority]** Introduce a custom application icon and branding.
