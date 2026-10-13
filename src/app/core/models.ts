@@ -61,6 +61,23 @@ export interface GitInfo {
   changedFiles: number;
 }
 
+/** One case's result in one run, with the code state that run measured. Times are seconds. */
+export interface CasePoint {
+  runId: string;
+  startedAt: string;
+  status: RunStatus;
+  commit: string | null;
+  shortCommit: string | null;
+  branch: string | null;
+  dirty: boolean;
+  mean: number;
+  stddev: number | null;
+  median: number;
+  min: number;
+  max: number;
+  samples: number;
+}
+
 export interface RunDetail {
   record: RunRecord;
   /** Suite configuration when the run happened; null for runs recorded before snapshots existed. */

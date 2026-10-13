@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { ActiveRunService } from "./active-run.service";
-import { RunDetail, RunRecord, Suite, SuiteSummary } from "./models";
+import { CasePoint, RunDetail, RunRecord, Suite, SuiteSummary } from "./models";
 
 const RECENT_RUNS = 8;
 
@@ -56,6 +56,16 @@ export class SuiteApiService {
 
   listRuns(suiteId: string, limit = 50): Promise<RunRecord[]> {
     return invoke<RunRecord[]>("list_runs", { suiteId, limit });
+  }
+
+  /** The newest `limit` runs that include the case, oldest first. A run without the case is absent. */
+  caseSeries(suiteId: string, caseName: string, limit = 500): Promise<CasePoint[]> {
+    return invoke<CasePoint[]>("case_series", { suiteId, caseName, limit });
+  }
+
+  /** Every case name that appears in any run of the suite. */
+  caseNames(suiteId: string): Promise<string[]> {
+    return invoke<string[]>("case_names", { suiteId });
   }
 
   getRun(id: string): Promise<RunDetail> {
