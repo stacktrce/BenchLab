@@ -40,6 +40,7 @@ pub fn run() {
             runs::commands::case_names,
             demo::load_demo,
             files::write_text_file,
+            files::write_binary_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

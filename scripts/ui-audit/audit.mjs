@@ -10,6 +10,7 @@
 import puppeteer from "puppeteer-core";
 import { ensureServer, findBrowser, stopServer } from "./browser.mjs";
 import { auditAxe } from "./checks/axe.mjs";
+import { auditChartExport } from "./checks/chart-export.mjs";
 import { auditDialogKeyboard } from "./checks/dialog-keyboard.mjs";
 import { auditOverlappingLoads } from "./checks/overlapping-loads.mjs";
 import { auditRunVisibility } from "./checks/run-visibility.mjs";
@@ -26,6 +27,7 @@ try {
   await auditDialogKeyboard(browser);
   await auditTabOrder(browser);
   await auditTrendKeyboard(browser);
+  await auditChartExport(browser);
   await auditOverlappingLoads(browser);
   await auditRunVisibility(browser);
 } finally {

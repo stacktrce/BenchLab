@@ -113,6 +113,11 @@ export function tauriMock({ empty, slow = false }) {
         case "cancel_run":
           finishRun?.();
           return true;
+        case "plugin:dialog|save":
+          return "C:/exports/" + args.options.defaultPath;
+        case "write_text_file":
+        case "write_binary_file":
+          return null;
         case "case_names":
           return empty ? [] : baseline.map((b) => b.command);
         case "case_series":
