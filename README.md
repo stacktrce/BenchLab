@@ -76,7 +76,7 @@ Suites and runs live in a SQLite database named `benchlab.db` in the app data fo
 
 ## Develop
 
-Requirements: Node 22 or newer, Rust (stable), and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
+Requirements: Node (developed on 26), Rust (stable), and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
 
 ```sh
 npm install
@@ -96,7 +96,7 @@ Layout:
 | `src/app/features` | Quick run, suite editor, run detail, compare |
 | `src-tauri/src` | SQLite and migrations, suite CRUD, process runner and cancellation, demo data, export file writer |
 | `scripts/fetch-hyperfine.mjs` | Sidecar download and verification |
-| `.agents/benchlab-plan.md` | Plan, status, design rules, backlog |
+| `AGENTS.md` | Contribution rules: code quality, git workflow, verification |
 
 ## Status
 
