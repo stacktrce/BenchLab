@@ -14,8 +14,8 @@ export class SuiteApiService {
 
   async refresh(): Promise<void> {
     const [suites, runs] = await Promise.all([
-      invoke<SuiteSummary[]>("list_suites_cmd"),
-      invoke<RunRecord[]>("list_runs_cmd", { suiteId: null, limit: RECENT_RUNS }),
+      invoke<SuiteSummary[]>("list_suites"),
+      invoke<RunRecord[]>("list_runs", { suiteId: null, limit: RECENT_RUNS }),
     ]);
     this.suites.set(suites);
     this.recentRuns.set(runs);
@@ -23,7 +23,7 @@ export class SuiteApiService {
 
   /** Creates (or reuses) the sample suite with two runs. Returns its id. */
   async loadDemo(): Promise<string> {
-    const id = await invoke<string>("load_demo_cmd");
+    const id = await invoke<string>("load_demo");
     await this.refresh();
     return id;
   }
@@ -33,33 +33,33 @@ export class SuiteApiService {
   }
 
   async saveSuite(suite: Suite): Promise<Suite> {
-    const saved = await invoke<Suite>("save_suite_cmd", { suite });
+    const saved = await invoke<Suite>("save_suite", { suite });
     await this.refresh();
     return saved;
   }
 
   /** Pins a run as the suite's baseline, or clears it with null. */
   async setBaseline(suiteId: string, runId: string | null): Promise<Suite> {
-    return invoke<Suite>("set_baseline_cmd", { suiteId, runId });
+    return invoke<Suite>("set_baseline", { suiteId, runId });
   }
 
   async duplicateSuite(id: string): Promise<Suite> {
-    const copy = await invoke<Suite>("duplicate_suite_cmd", { id });
+    const copy = await invoke<Suite>("duplicate_suite", { id });
     await this.refresh();
     return copy;
   }
 
   async deleteSuite(id: string): Promise<void> {
-    await invoke<void>("delete_suite_cmd", { id });
+    await invoke<void>("delete_suite", { id });
     await this.refresh();
   }
 
   listRuns(suiteId: string, limit = 50): Promise<RunRecord[]> {
-    return invoke<RunRecord[]>("list_runs_cmd", { suiteId, limit });
+    return invoke<RunRecord[]>("list_runs", { suiteId, limit });
   }
 
   getRun(id: string): Promise<RunDetail> {
-    return invoke<RunDetail>("get_run_cmd", { id });
+    return invoke<RunDetail>("get_run", { id });
   }
 
   /** Stops the running suite (or quick run). The partial run is still recorded. */

@@ -185,12 +185,12 @@ async function auditDialogKeyboard(browser) {
   focus = await activeElement(page);
   check(!focus.inModal && focus.text === "Run", `focus returns to the opener (got ${focus.tag} "${focus.text}")`);
 
-  // The mocked backend rejects save_suite_cmd, which shows up in the page as an error note.
+  // The mocked backend rejects save_suite, which shows up in the page as an error note.
   await page.keyboard.down("Control");
   await page.keyboard.press("s");
   await page.keyboard.up("Control");
   await new Promise((r) => setTimeout(r, 300));
-  check(await page.evaluate(() => document.body.innerText.includes("mock: save_suite_cmd")), "Ctrl+S reaches the save handler");
+  check(await page.evaluate(() => document.body.innerText.includes("mock: save_suite")), "Ctrl+S reaches the save handler");
   await page.close();
 }
 

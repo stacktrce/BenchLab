@@ -125,7 +125,7 @@ fn insert_demo_run(
 }
 
 /// Creates the demo suite and two runs. Returns the suite id; reuses an existing demo suite.
-pub fn load_demo(conn: &Connection) -> Result<String, String> {
+pub fn ensure_demo_suite(conn: &Connection) -> Result<String, String> {
     if let Ok(id) = conn.query_row(
         "SELECT id FROM suites WHERE name = ?1",
         [DEMO_SUITE_NAME],
@@ -234,8 +234,8 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub fn load_demo_cmd(db: State<'_, Db>) -> Result<String, String> {
-    db.with(load_demo)
+pub fn load_demo(db: State<'_, Db>) -> Result<String, String> {
+    db.with(ensure_demo_suite)
 }
 
 #[cfg(test)]
@@ -247,8 +247,8 @@ mod tests {
     #[test]
     fn creates_suite_with_two_runs_once() {
         let conn = memory();
-        let id = load_demo(&conn).unwrap();
-        assert_eq!(load_demo(&conn).unwrap(), id);
+        let id = ensure_demo_suite(&conn).unwrap();
+        assert_eq!(ensure_demo_suite(&conn).unwrap(), id);
         let runs = list_runs(&conn, Some(&id), 10).unwrap();
         assert_eq!(runs.len(), 2);
         assert!(runs[0].started_at > runs[1].started_at);

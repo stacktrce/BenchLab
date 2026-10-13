@@ -76,9 +76,9 @@ export function tauriMock({ empty, slow = false }) {
       switch (command) {
         case "find_hyperfine":
           return { path: "C:\\Program Files\\BenchLab\\hyperfine.exe", source: "bundled", version: "hyperfine 1.20.0" };
-        case "list_suites_cmd":
+        case "list_suites":
           return empty ? [] : [{ id: suite.id, name: suite.name, description: suite.description, caseCount: 4, updatedAt: "" }];
-        case "list_runs_cmd":
+        case "list_runs":
           return empty ? [] : [runs.r2.record, runs.r1.record];
         case "get_suite":
           if (args.id === "s2") return second;
@@ -91,7 +91,7 @@ export function tauriMock({ empty, slow = false }) {
         case "cancel_run":
           finishRun?.();
           return true;
-        case "get_run_cmd":
+        case "get_run":
           return slow && args.id === "r1" ? later(runs.r1, 800) : runs[args.id];
         default:
           throw `mock: ${command}`;

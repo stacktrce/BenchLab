@@ -1,6 +1,6 @@
 use super::execute::execute_suite;
 use super::model::{RunDetail, RunRecord};
-use super::store::{get_run, insert_run, list_runs};
+use super::store;
 use crate::db::{Db, now_iso};
 use crate::hyperfine::{self, RunControl};
 use crate::suites::load_suite;
@@ -30,19 +30,19 @@ pub async fn run_suite(
     .await
     .map_err(|e| format!("Suite run failed: {e}"))?;
 
-    db.with(|c| insert_run(c, &suite, &started_at, &tool_version, &outcome))
+    db.with(|c| store::insert_run(c, &suite, &started_at, &tool_version, &outcome))
 }
 
 #[tauri::command]
-pub fn list_runs_cmd(
+pub fn list_runs(
     db: State<'_, Db>,
     suite_id: Option<String>,
     limit: Option<i64>,
 ) -> Result<Vec<RunRecord>, String> {
-    db.with(|c| list_runs(c, suite_id.as_deref(), limit.unwrap_or(50)))
+    db.with(|c| store::list_runs(c, suite_id.as_deref(), limit.unwrap_or(50)))
 }
 
 #[tauri::command]
-pub fn get_run_cmd(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
-    db.with(|c| get_run(c, &id))
+pub fn get_run(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
+    db.with(|c| store::get_run(c, &id))
 }
