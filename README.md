@@ -13,6 +13,7 @@ A desktop app for the question hyperfine leaves to you: **did my change make it 
 | Rerun the same benchmark later | Retype or script the command line | Saved suite: cases, setup, cleanup, working directory, runs, warm-up |
 | Remember past results | Whatever you saved by hand | Every run stored with its raw output, a snapshot of the suite configuration, and the git commit it measured |
 | Compare two runs | Eyeball two terminal outputs | Per-case change with a 95% interval, a verdict, and caveats |
+| See change over time | Plot it yourself | Distribution, run-order and per-case trend charts, with the 95% band, uncommitted runs and the regression budget marked |
 | Share results | Copy text | Markdown and CSV export, copy as Markdown |
 | Install | Separate | Ships its own hyperfine |
 
@@ -33,7 +34,8 @@ The sidebar footer shows which one is in use and its version. Every run records 
 1. **New suite.** Name it, add cases (a name and a command each), and choose timed runs and warm-up runs. Setup and cleanup commands and a working directory are under each case.
 2. **Run.** BenchLab first shows every command, setup, cleanup and directory, and runs nothing until you confirm. You can cancel a running suite; cases already finished are kept.
 3. **Compare.** Open a run and choose Compare. The baseline defaults to the suite's pinned run (pin one from a run's page with Pin as baseline), or to the previous run that has results if none is pinned. Pick any two runs of the suite.
-4. **Export.** Markdown or CSV from a run or a comparison.
+4. **Charts.** A run and a comparison show a histogram of one case's timings and the timings in run order (a cold first run stands out there). The suite's Trends tab plots one case's mean across its runs. Every chart has a Show data table, and can be saved as SVG or PNG.
+5. **Export.** Markdown or CSV from a run or a comparison.
 
 **Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing.
 
@@ -67,7 +69,7 @@ BenchLab executes the commands you write, through hyperfine's shell, with your u
 - Nothing runs on startup, on opening a suite, or on loading sample data. Running always goes through the confirmation dialog.
 - The backend runs the saved suite, not what the screen holds, so the commands you confirm are the commands that execute.
 - Commands reach hyperfine as single arguments; BenchLab never builds shell strings itself.
-- Exports are written only to `.md`, `.csv` or `.txt` paths chosen in the system save dialog. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
+- Exports are written only to `.md`, `.csv`, `.svg` or `.txt` paths chosen in the system save dialog; chart images only to `.png`, and only if the bytes are a PNG. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
 - Only one benchmark runs at a time, because parallel runs distort each other's timings.
 - To record the code state, BenchLab runs read-only git commands (`rev-parse`, `symbolic-ref`, `status`) in each case's working directory, with the fsmonitor hook disabled so a repository's own config cannot make it run a program. If git is missing or the directory is not a repository, nothing is recorded and nothing fails.
 
@@ -94,7 +96,7 @@ Layout:
 
 | Path | What |
 |---|---|
-| `src/app/core` | Parser, comparison statistics (`compare/`), export, validation, error messages (framework-free, unit-tested) |
+| `src/app/core` | Parser, comparison statistics (`compare/`), chart maths and layout (`charts/`), export, validation, error messages (framework-free, unit-tested) |
 | `src/app/features` | Quick run, suite editor (with its form mapping and run confirmation as plain functions), run detail, compare |
 | `src-tauri/src` | `db` (SQLite, migrations), `suites/`, `runs/`, `hyperfine/` (locate, process, run slot, commands), `git`, `demo`, `files`; each folder splits model, storage and Tauri commands |
 | `scripts/fetch-hyperfine.mjs` | Sidecar download and verification |
