@@ -45,10 +45,24 @@ export interface RunRecord {
   error: string | null;
 }
 
+/** A repository a case ran in, as it was when the run started. */
+export interface GitInfo {
+  dir: string;
+  root: string;
+  commit: string;
+  shortCommit: string;
+  /** Null on a detached HEAD. */
+  branch: string | null;
+  dirty: boolean;
+  changedFiles: number;
+}
+
 export interface RunDetail {
   record: RunRecord;
   /** Suite configuration when the run happened; null for runs recorded before snapshots existed. */
   config: Suite | null;
+  /** Repositories the cases ran in. Empty when none applies or the run predates this. */
+  git: GitInfo[];
   /** Merged hyperfine JSON for the cases that completed. */
   rawOutput: string | null;
 }

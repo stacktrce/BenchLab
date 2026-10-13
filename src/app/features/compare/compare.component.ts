@@ -1,7 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
-import { ComparisonRow, compareRuns, configDifferences, summarize } from "../../core/compare";
+import { ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
 import { comparisonToCsv, comparisonToMarkdown } from "../../core/export";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { PAGE_SIZE } from "../../core/paging";
@@ -56,6 +56,12 @@ export class CompareComponent {
     const b = this.baselineRun();
     const c = this.candidateRun();
     return b && c && this.rows().length ? configDifferences(b.config, c.config) : [];
+  });
+
+  readonly gitNotes = computed(() => {
+    const b = this.baselineRun();
+    const c = this.candidateRun();
+    return b && c && this.rows().length ? gitNotes(b.git, c.git) : [];
   });
 
   /** Shared axis per row so both strips can be compared by eye. */
@@ -156,7 +162,7 @@ export class CompareComponent {
   private markdown(): string | null {
     const b = this.baselineRun();
     const c = this.candidateRun();
-    return b && c && this.rows().length ? comparisonToMarkdown(this.rows(), b.record, c.record, this.configChanges()) : null;
+    return b && c && this.rows().length ? comparisonToMarkdown(this.rows(), b.record, c.record, this.configChanges(), this.gitNotes()) : null;
   }
 
   saveMarkdown(): void {

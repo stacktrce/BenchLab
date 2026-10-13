@@ -41,17 +41,23 @@ export function tauriMock({ empty }) {
     })),
   };
 
-  const run = (id, startedAt, results) => ({
+  const gitState = (commit, branch, changedFiles) => ({
+    dir: "~/code/strings", root: "~/code/strings", commit, shortCommit: commit.slice(0, 7), branch,
+    dirty: changedFiles > 0, changedFiles,
+  });
+
+  const run = (id, startedAt, results, git) => ({
     record: {
       id, suiteId: suite.id, suiteName: suite.name, startedAt, finishedAt: startedAt.replace(":00.000", ":23.000"),
       status: "completed", toolVersion: "hyperfine 1.20.0 (sample)", caseCount: results.length, error: null,
     },
     config: suite,
+    git: [git],
     rawOutput: JSON.stringify({ results }),
   });
   const runs = {
-    r1: run("r1", "2026-10-12T09:00:00.000Z", baseline),
-    r2: run("r2", "2026-10-13T11:30:00.000Z", candidate),
+    r1: run("r1", "2026-10-12T09:00:00.000Z", baseline, gitState("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0)),
+    r2: run("r2", "2026-10-13T11:30:00.000Z", candidate, gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2)),
   };
 
   window.__TAURI_INTERNALS__ = {

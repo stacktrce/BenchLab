@@ -1,6 +1,6 @@
-import { ComparisonRow, summarize } from "./compare";
-import { ms, percent, signedMs } from "./format";
-import { RunRecord, Suite } from "./models";
+import { ComparisonRow, GitNote, summarize } from "./compare";
+import { describeGit, ms, percent, signedMs } from "./format";
+import { GitInfo, RunRecord, Suite } from "./models";
 import { BenchmarkResult } from "./parser/hyperfine.types";
 
 const VERDICT_TEXT = { faster: "faster", slower: "slower", inconclusive: "within noise" } as const;
@@ -27,8 +27,14 @@ function runMeta(r: RunRecord): string {
 }
 
 /** `suite` is the configuration snapshot taken when the run happened; null for older runs. */
-export function runToMarkdown(record: RunRecord, result: BenchmarkResult | null, suite: Suite | null): string {
+export function runToMarkdown(
+  record: RunRecord,
+  result: BenchmarkResult | null,
+  suite: Suite | null,
+  git: GitInfo[] = [],
+): string {
   const out: string[] = [`# ${record.suiteName}`, "", runMeta(record), ""];
+  for (const g of git) out.push(`Code: ${code(describeGit(g))} in ${code(g.root)}`, "");
 
   if (suite) {
     out.push(
@@ -119,6 +125,7 @@ export function comparisonToMarkdown(
   baseline: RunRecord,
   candidate: RunRecord,
   configChanges: string[] = [],
+  gitNotes: GitNote[] = [],
 ): string {
   const s = summarize(rows);
   const headline = [
@@ -153,6 +160,9 @@ export function comparisonToMarkdown(
     "",
   ];
 
+  if (gitNotes.length) {
+    out.push("## Code state", "", ...gitNotes.map((n) => `- ${n.kind === "warn" ? "**Warning:** " : ""}${n.text}`), "");
+  }
   if (configChanges.length) {
     out.push("## Configuration differs between the runs", "", ...configChanges.map((c) => `- ${c}`), "");
   }

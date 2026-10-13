@@ -50,6 +50,13 @@
       The runs used different hyperfine versions, so they may not be directly comparable.
     </div>
   }
+  @if (gitNotes().length) {
+    @for (n of gitNotes(); track n.text) {
+      <div class="note" [class.warn]="n.kind === 'warn'" role="status">
+        <p>{{ n.text }}</p>
+      </div>
+    }
+  }
   @if (configChanges().length) {
     <div class="note warn" role="status">
       <p><strong>The runs were configured differently</strong></p>
