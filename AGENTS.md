@@ -75,6 +75,20 @@ From the official Angular guidance (see Sources), plus what this repo already do
 - Never put a string from user data into HTML unsafely. No `innerHTML` with user or command text.
 - Formatting follows the existing files: 2 spaces, double quotes, semicolons, trailing commas in multi-line literals.
 
+### Where code runs: TypeScript or Rust
+
+Rust owns what needs the operating system or durable state: processes, the database, files, git. Parsing hyperfine output, comparison statistics and export stay in TypeScript (`src/app/core`). This was measured, not assumed (Node/V8 against `serde_json` in a release build, same files, median of 7):
+
+| Input | TS: parse and validate | Rust: typed parse | TS: compare | TS: CSV export |
+|---|---|---|---|---|
+| 5,000 cases x 10 timings (1.8 MB) | 5.9 ms | 6.8 ms | 1.6 ms | 2.9 ms |
+| 50,000 cases x 10 timings (18 MB) | 78 ms | 73 ms | 38 ms | 35 ms |
+| 5,000 cases x 1,000 timings (82 MB) | 307 ms | 202 ms | 3 ms | 4 ms |
+
+Rust is not meaningfully faster at the sizes that occur (a suite has tens of cases, not thousands), and it would not help even at 82 MB, because the parsed data would have to cross the IPC bridge as JSON and be parsed again in the webview. It would also duplicate the validation and the tests, and split the logic the exports and comparison share. In practice the cost of a big result set is rendering rows, which is why tables are paged.
+
+Revisit only if a feature adds real CPU work on the timing arrays (for example bootstrap confidence intervals or outlier detection over thousands of cases). Try a Web Worker first; move to Rust only if measurement shows the worker is not enough.
+
 ### Rust
 
 - `cargo fmt` and `cargo clippy --all-targets -- -D warnings` must be clean.
