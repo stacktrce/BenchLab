@@ -50,6 +50,10 @@ pub struct Suite {
     /// Untimed runs before measuring, to fill caches.
     #[serde(default = "default_warmup")]
     pub warmup: i64,
+    /// The run comparisons use by default. Changed only through `set_baseline`: saving a suite
+    /// neither sets nor clears it, so editing the form cannot unpin by accident.
+    #[serde(default)]
+    pub baseline_run_id: Option<String>,
     #[serde(default)]
     pub schema_version: i64,
     #[serde(default)]
@@ -112,7 +116,8 @@ pub fn validate(suite: &Suite) -> Vec<String> {
 pub fn load_suite(conn: &Connection, id: &str) -> Result<Suite, String> {
     let mut suite = conn
         .query_row(
-            "SELECT id, name, description, runs, schema_version, created_at, updated_at, warmup
+            "SELECT id, name, description, runs, schema_version, created_at, updated_at, warmup,
+                    baseline_run_id
              FROM suites WHERE id = ?1",
             [id],
             |r| {
@@ -125,6 +130,7 @@ pub fn load_suite(conn: &Connection, id: &str) -> Result<Suite, String> {
                     created_at: r.get(5)?,
                     updated_at: r.get(6)?,
                     warmup: r.get(7)?,
+                    baseline_run_id: r.get(8)?,
                     cases: Vec::new(),
                 })
             },
@@ -254,11 +260,51 @@ pub fn save_suite(conn: &Connection, mut suite: Suite) -> Result<Suite, String> 
 pub fn duplicate_suite(conn: &Connection, id: &str) -> Result<Suite, String> {
     let mut copy = load_suite(conn, id)?;
     copy.id = String::new();
+    copy.baseline_run_id = None;
     copy.name = format!("{} (copy)", copy.name);
     for c in &mut copy.cases {
         c.id = String::new();
     }
     save_suite(conn, copy)
+}
+
+/// Pins `run_id` as the suite's baseline, or clears it with None. The run must belong to the
+/// suite and have results, otherwise comparisons against it would have nothing to compare.
+pub fn set_baseline(
+    conn: &Connection,
+    suite_id: &str,
+    run_id: Option<&str>,
+) -> Result<Suite, String> {
+    if let Some(run_id) = run_id {
+        let run = conn
+            .query_row(
+                "SELECT suite_id, raw_output IS NOT NULL FROM runs WHERE id = ?1",
+                [run_id],
+                |r| Ok((r.get::<_, String>(0)?, r.get::<_, bool>(1)?)),
+            )
+            .optional()
+            .map_err(sql_err)?;
+        match run {
+            None => return Err("Run not found.".to_string()),
+            Some((owner, _)) if owner != suite_id => {
+                return Err("That run belongs to a different suite.".to_string());
+            }
+            Some((_, false)) => {
+                return Err("That run has no results to compare against.".to_string());
+            }
+            Some(_) => {}
+        }
+    }
+    let changed = conn
+        .execute(
+            "UPDATE suites SET baseline_run_id = ?2 WHERE id = ?1",
+            params![suite_id, run_id],
+        )
+        .map_err(sql_err)?;
+    if changed == 0 {
+        return Err("Suite not found.".to_string());
+    }
+    load_suite(conn, suite_id)
 }
 
 pub fn delete_suite(conn: &Connection, id: &str) -> Result<(), String> {
@@ -292,6 +338,15 @@ pub fn duplicate_suite_cmd(db: State<'_, Db>, id: String) -> Result<Suite, Strin
 }
 
 #[tauri::command]
+pub fn set_baseline_cmd(
+    db: State<'_, Db>,
+    suite_id: String,
+    run_id: Option<String>,
+) -> Result<Suite, String> {
+    db.with(|c| set_baseline(c, &suite_id, run_id.as_deref()))
+}
+
+#[tauri::command]
 pub fn delete_suite_cmd(db: State<'_, Db>, id: String) -> Result<(), String> {
     db.with(|c| delete_suite(c, &id))
 }
@@ -320,6 +375,7 @@ mod tests {
             description: String::new(),
             runs: 10,
             warmup: 1,
+            baseline_run_id: None,
             schema_version: 0,
             created_at: String::new(),
             updated_at: String::new(),
@@ -434,5 +490,148 @@ mod migration_tests {
             (suite.name.as_str(), suite.runs, suite.warmup),
             ("Old", 5, 0)
         );
+    }
+}
+
+#[cfg(test)]
+mod baseline_tests {
+    use super::*;
+    use crate::db::memory;
+
+    fn case() -> Case {
+        Case {
+            id: String::new(),
+            name: "a".into(),
+            command: "echo".into(),
+            setup_command: None,
+            cleanup_command: None,
+            working_directory: None,
+            enabled: true,
+        }
+    }
+
+    fn make_suite(conn: &Connection, name: &str) -> Suite {
+        save_suite(
+            conn,
+            Suite {
+                id: String::new(),
+                name: name.into(),
+                description: String::new(),
+                runs: 3,
+                warmup: 0,
+                baseline_run_id: None,
+                schema_version: 0,
+                created_at: String::new(),
+                updated_at: String::new(),
+                cases: vec![case()],
+            },
+        )
+        .unwrap()
+    }
+
+    fn add_run(conn: &Connection, id: &str, suite: &Suite, raw_output: Option<&str>) {
+        conn.execute(
+            "INSERT INTO runs (id, suite_id, suite_name, started_at, finished_at, status,
+                               tool_version, case_count, raw_output)
+             VALUES (?1, ?2, ?3, 't', 't', 'completed', 'v', 1, ?4)",
+            params![id, suite.id, suite.name, raw_output],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn pin_and_unpin() {
+        let conn = memory();
+        let suite = make_suite(&conn, "S");
+        add_run(&conn, "r1", &suite, Some("{}"));
+        assert_eq!(
+            set_baseline(&conn, &suite.id, Some("r1"))
+                .unwrap()
+                .baseline_run_id
+                .as_deref(),
+            Some("r1")
+        );
+        assert_eq!(
+            load_suite(&conn, &suite.id)
+                .unwrap()
+                .baseline_run_id
+                .as_deref(),
+            Some("r1")
+        );
+        assert_eq!(
+            set_baseline(&conn, &suite.id, None)
+                .unwrap()
+                .baseline_run_id,
+            None
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_foreign_and_resultless_runs() {
+        let conn = memory();
+        let (a, b) = (make_suite(&conn, "A"), make_suite(&conn, "B"));
+        add_run(&conn, "other", &b, Some("{}"));
+        add_run(&conn, "empty", &a, None);
+        assert_eq!(
+            set_baseline(&conn, &a.id, Some("nope")).unwrap_err(),
+            "Run not found."
+        );
+        assert!(
+            set_baseline(&conn, &a.id, Some("other"))
+                .unwrap_err()
+                .contains("different suite")
+        );
+        assert!(
+            set_baseline(&conn, &a.id, Some("empty"))
+                .unwrap_err()
+                .contains("no results")
+        );
+        assert_eq!(
+            set_baseline(&conn, "missing", None).unwrap_err(),
+            "Suite not found."
+        );
+        assert_eq!(load_suite(&conn, &a.id).unwrap().baseline_run_id, None);
+    }
+
+    #[test]
+    fn editing_the_suite_neither_clears_nor_changes_the_baseline() {
+        let conn = memory();
+        let suite = make_suite(&conn, "S");
+        add_run(&conn, "r1", &suite, Some("{}"));
+        let pinned = set_baseline(&conn, &suite.id, Some("r1")).unwrap();
+
+        // the form sends the suite back without (or with a stale) baseline
+        let mut edited = pinned.clone();
+        edited.name = "Renamed".into();
+        edited.baseline_run_id = None;
+        assert_eq!(
+            save_suite(&conn, edited)
+                .unwrap()
+                .baseline_run_id
+                .as_deref(),
+            Some("r1")
+        );
+        let mut tampered = pinned;
+        tampered.baseline_run_id = Some("whatever".into());
+        assert_eq!(
+            save_suite(&conn, tampered)
+                .unwrap()
+                .baseline_run_id
+                .as_deref(),
+            Some("r1")
+        );
+    }
+
+    #[test]
+    fn a_duplicate_does_not_inherit_the_baseline_and_a_pinned_suite_can_be_deleted() {
+        let conn = memory();
+        let suite = make_suite(&conn, "S");
+        add_run(&conn, "r1", &suite, Some("{}"));
+        set_baseline(&conn, &suite.id, Some("r1")).unwrap();
+        let copy = duplicate_suite(&conn, &suite.id).unwrap();
+        assert_eq!(copy.baseline_run_id, None);
+        // suites and runs reference each other; deleting must not trip a foreign key
+        delete_suite(&conn, &suite.id).unwrap();
+        assert!(list_suites(&conn).unwrap().iter().all(|s| s.id != suite.id));
     }
 }

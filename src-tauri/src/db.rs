@@ -49,6 +49,8 @@ const MIGRATIONS: &[&str] = &[
     // v4: git state of the case working directories when the run started, as JSON.
     // NULL for runs recorded earlier.
     "ALTER TABLE runs ADD COLUMN git_json TEXT;",
+    // v5: the run a suite compares against by default. SET NULL keeps the suite valid if the run goes.
+    "ALTER TABLE suites ADD COLUMN baseline_run_id TEXT REFERENCES runs(id) ON DELETE SET NULL;",
 ];
 
 pub struct Db(Mutex<Connection>);
