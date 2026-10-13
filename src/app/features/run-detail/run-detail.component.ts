@@ -1,13 +1,14 @@
 import { DatePipe } from "@angular/common";
-import { Component, effect, inject, input, signal, untracked } from "@angular/core";
+import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { runToCsv, runToMarkdown } from "../../core/export";
 import { describeGit } from "../../core/format";
-import { RunDetail } from "../../core/models";
+import { RunDetail, Suite } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
 import { SuiteApiService } from "../../core/suite-api.service";
+import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon.component";
 import { ResultsTableComponent } from "../../shared/results-table.component";
 
@@ -23,10 +24,17 @@ export class RunDetailComponent {
 
   private readonly api = inject(SuiteApiService);
   private readonly files = inject(FileExportService);
+  private readonly toast = inject(ToastService);
 
   readonly detail = signal<RunDetail | null>(null);
   readonly result = signal<BenchmarkResult | null>(null);
   readonly error = signal<string | null>(null);
+  private readonly suite = signal<Suite | null>(null);
+
+  readonly isBaseline = computed(() => {
+    const d = this.detail();
+    return !!d && d.record.id === this.suite()?.baselineRunId;
+  });
 
   constructor() {
     effect(() => {
@@ -39,9 +47,11 @@ export class RunDetailComponent {
     this.detail.set(null);
     this.result.set(null);
     this.error.set(null);
+    this.suite.set(null);
     try {
       const detail = await this.api.getRun(id);
       this.detail.set(detail);
+      this.api.getSuite(detail.record.suiteId).then((s) => this.suite.set(s), () => undefined);
       if (detail.rawOutput) {
         try {
           this.result.set(parseHyperfineJSON(detail.rawOutput));
@@ -51,6 +61,18 @@ export class RunDetailComponent {
       }
     } catch (e) {
       this.error.set(String(e));
+    }
+  }
+
+  async togglePin(): Promise<void> {
+    const d = this.detail();
+    if (!d) return;
+    const pin = !this.isBaseline();
+    try {
+      this.suite.set(await this.api.setBaseline(d.record.suiteId, pin ? d.record.id : null));
+      this.toast.show(pin ? "Pinned as the baseline for this suite" : "Baseline cleared");
+    } catch (e) {
+      this.toast.show(String(e), "error");
     }
   }
 

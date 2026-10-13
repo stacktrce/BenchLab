@@ -4,7 +4,7 @@
 use crate::db::{Db, sql_err};
 use crate::git::GitInfo;
 use crate::runs::SuiteOutcome;
-use crate::suites::{Case, Suite, save_suite};
+use crate::suites::{Case, Suite, save_suite, set_baseline};
 use rusqlite::{Connection, params};
 use serde_json::{Value, json};
 use tauri::State;
@@ -88,7 +88,7 @@ fn insert_demo_run(
     suite: &Suite,
     age: &str,
     o: &SuiteOutcome,
-) -> Result<(), String> {
+) -> Result<String, String> {
     let started: String = conn
         .query_row(
             "SELECT strftime('%Y-%m-%dT%H:%M:%fZ','now', ?1)",
@@ -103,12 +103,13 @@ fn insert_demo_run(
             |r| r.get(0),
         )
         .map_err(sql_err)?;
+    let id = uuid::Uuid::new_v4().to_string();
     conn.execute(
         "INSERT INTO runs (id, suite_id, suite_name, started_at, finished_at, status,
                            tool_version, case_count, error, raw_output, config_json, git_json)
          VALUES (?1, ?2, ?3, ?4, ?5, 'completed', 'hyperfine 1.20.0 (sample)', ?6, NULL, ?7, ?8, ?9)",
         params![
-            uuid::Uuid::new_v4().to_string(),
+            id,
             suite.id,
             suite.name,
             started,
@@ -120,7 +121,7 @@ fn insert_demo_run(
         ],
     )
     .map_err(sql_err)?;
-    Ok(())
+    Ok(id)
 }
 
 /// Creates the demo suite and two runs. Returns the suite id; reuses an existing demo suite.
@@ -150,6 +151,7 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
                 .into(),
             runs: 10,
             warmup: 1,
+            baseline_run_id: None,
             schema_version: 0,
             created_at: String::new(),
             updated_at: String::new(),
@@ -224,8 +226,9 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
     ];
     let before = sample_git("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0);
     let after = sample_git("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2);
-    insert_demo_run(conn, &suite, "-1 day", &outcome(&baseline, 11, before))?;
+    let first = insert_demo_run(conn, &suite, "-1 day", &outcome(&baseline, 11, before))?;
     insert_demo_run(conn, &suite, "-2 hours", &outcome(&candidate, 97, after))?;
+    set_baseline(conn, &suite.id, Some(&first))?;
     Ok(suite.id)
 }
 
@@ -249,6 +252,9 @@ mod tests {
         assert_eq!(runs.len(), 2);
         assert!(runs[0].started_at > runs[1].started_at);
         assert!(runs.iter().all(|r| r.finished_at > r.started_at));
+        // the older run is pinned as the baseline, so the sample shows the feature
+        let suite = crate::suites::load_suite(&conn, &id).unwrap();
+        assert_eq!(suite.baseline_run_id.as_deref(), Some(runs[1].id.as_str()));
     }
 
     #[test]

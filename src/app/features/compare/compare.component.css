@@ -88,3 +88,8 @@ td {
 .more {
   margin-top: 10px;
 }
+
+.basis {
+  margin: 4px 0 8px;
+  font-size: 12px;
+}

@@ -113,6 +113,7 @@ export class SuiteEditorComponent {
       description: v.description,
       runs: Number(v.runs),
       warmup: Number(v.warmup),
+      baselineRunId: saved?.baselineRunId ?? null,
       schemaVersion: saved?.schemaVersion ?? 0,
       createdAt: saved?.createdAt ?? "",
       updatedAt: saved?.updatedAt ?? "",

@@ -29,6 +29,7 @@ pub fn run() {
             suites::save_suite_cmd,
             suites::duplicate_suite_cmd,
             suites::delete_suite_cmd,
+            suites::set_baseline_cmd,
             runs::run_suite,
             runs::list_runs_cmd,
             runs::get_run_cmd,

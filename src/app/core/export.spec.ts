@@ -30,7 +30,7 @@ const caseResult = (command: string, mean: number): CaseResult => ({
 const result = (...cases: CaseResult[]): BenchmarkResult => ({ cases });
 
 const suite: Suite = {
-  id: "s1", name: "My suite", description: "", runs: 10, warmup: 1, schemaVersion: 1,
+  id: "s1", name: "My suite", description: "", runs: 10, warmup: 1, baselineRunId: null, schemaVersion: 1,
   createdAt: "", updatedAt: "",
   cases: [
     { id: "c1", name: "a|b", command: "echo `x` | cat", setupCommand: null, cleanupCommand: null, workingDirectory: null, enabled: true },

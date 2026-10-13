@@ -36,6 +36,11 @@ export class SuiteApiService {
     return saved;
   }
 
+  /** Pins a run as the suite's baseline, or clears it with null. */
+  async setBaseline(suiteId: string, runId: string | null): Promise<Suite> {
+    return invoke<Suite>("set_baseline_cmd", { suiteId, runId });
+  }
+
   async duplicateSuite(id: string): Promise<Suite> {
     const copy = await invoke<Suite>("duplicate_suite_cmd", { id });
     await this.refresh();

@@ -34,7 +34,7 @@ export function tauriMock({ empty }) {
   const suite = {
     id: "s1", name: "Demo: string building (sample data)",
     description: "Sample data. The commands are placeholders; edit them before running.",
-    runs: 10, warmup: 1, schemaVersion: 1, createdAt: "", updatedAt: "",
+    runs: 10, warmup: 1, baselineRunId: "r1", schemaVersion: 1, createdAt: "", updatedAt: "",
     cases: baseline.map((b, i) => ({
       id: `c${i}`, name: b.command, command: `node bench/${["concat", "join", "template", "split"][i]}.js`,
       setupCommand: i === 3 ? "node bench/prepare.js" : null, cleanupCommand: null, workingDirectory: null, enabled: true,

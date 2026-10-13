@@ -17,6 +17,8 @@ export interface Suite {
   runs: number;
   /** Untimed runs before measuring, to fill caches. */
   warmup: number;
+  /** The run comparisons use by default. Changed only by pinning, never by saving the suite. */
+  baselineRunId: string | null;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
