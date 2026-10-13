@@ -1,6 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
+import { chooseBaseline } from "../../core/baseline";
 import { ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
 import { comparisonToCsv, comparisonToMarkdown } from "../../core/export";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
@@ -33,6 +34,8 @@ export class CompareComponent {
   readonly candidateRun = signal<RunDetail | null>(null);
   readonly rows = signal<ComparisonRow[]>([]);
   readonly message = signal<string | null>(null);
+  /** Why the baseline was chosen, when the user did not pick one. */
+  readonly autoBaseline = signal<"pinned" | "previous" | null>(null);
   readonly loading = signal(false);
 
   readonly summary = computed(() => summarize(this.rows()));
@@ -85,6 +88,7 @@ export class CompareComponent {
     this.baselineRun.set(null);
     this.candidateRun.set(null);
     this.rows.set([]);
+    this.autoBaseline.set(null);
     this.limit.set(PAGE_SIZE);
     this.message.set(null);
     if (!candidateId) {
@@ -98,10 +102,15 @@ export class CompareComponent {
       this.runs.set(runs);
       this.candidateRun.set(candidate);
 
-      const fallback = runs[runs.findIndex((r) => r.id === candidateId) + 1];
-      const resolvedBaseline = baselineId ?? fallback?.id;
+      let resolvedBaseline = baselineId;
       if (!resolvedBaseline) {
-        this.message.set("This suite needs at least two runs to compare.");
+        const suite = await this.api.getSuite(candidate.record.suiteId);
+        const choice = chooseBaseline(runs, candidateId, suite.baselineRunId);
+        resolvedBaseline = choice?.id;
+        this.autoBaseline.set(choice?.reason ?? null);
+      }
+      if (!resolvedBaseline) {
+        this.message.set("This suite needs at least two runs with results to compare.");
         return;
       }
       if (resolvedBaseline === candidateId) {

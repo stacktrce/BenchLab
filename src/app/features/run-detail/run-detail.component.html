@@ -12,6 +12,10 @@
         </button>
         <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
         <button type="button" class="bare" (click)="saveCsv()" [disabled]="!result()"><app-icon name="download" /> CSV</button>
+        <button type="button" class="bare" (click)="togglePin()" [disabled]="!result()"
+                [title]="result() ? '' : 'This run has no results to compare against'">
+          {{ isBaseline() ? "Unpin baseline" : "Pin as baseline" }}
+        </button>
         <button type="button" class="quiet" [routerLink]="['/compare']" [queryParams]="{ candidate: d.record.id }">
           <app-icon name="swap" /> Compare
         </button>
@@ -23,6 +27,9 @@
       · {{ durationSeconds(d).toFixed(1) }} s
       · {{ d.record.caseCount }} case(s)
       · {{ d.record.toolVersion }}
+      @if (isBaseline()) {
+        · <strong>pinned baseline</strong>
+      }
     </p>
     @for (g of d.git; track g.root) {
       <p class="muted meta" [title]="g.root">

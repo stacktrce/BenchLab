@@ -171,7 +171,7 @@ describe("statistical honesty", () => {
 
 describe("configDifferences", () => {
   const suite = (over: Partial<Suite> = {}, command = "echo"): Suite => ({
-    id: "s", name: "S", description: "", runs: 10, warmup: 1, schemaVersion: 1, createdAt: "", updatedAt: "",
+    id: "s", name: "S", description: "", runs: 10, warmup: 1, baselineRunId: null, schemaVersion: 1, createdAt: "", updatedAt: "",
     cases: [{ id: "c", name: "a", command, setupCommand: null, cleanupCommand: null, workingDirectory: null, enabled: true }],
     ...over,
   });

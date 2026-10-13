@@ -50,6 +50,11 @@
       The runs used different hyperfine versions, so they may not be directly comparable.
     </div>
   }
+  @if (autoBaseline() === "pinned") {
+    <p class="faint basis">The baseline is this suite's pinned run. Choose another above to override it.</p>
+  } @else if (autoBaseline() === "previous") {
+    <p class="faint basis">No baseline is pinned, so this compares with the previous run. Pin one from a run's page.</p>
+  }
   @if (gitNotes().length) {
     @for (n of gitNotes(); track n.text) {
       <div class="note" [class.warn]="n.kind === 'warn'" role="status">
