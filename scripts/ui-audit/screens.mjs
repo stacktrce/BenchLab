@@ -28,6 +28,7 @@ export const SCREENS = [
   ["suite", "/suites/s1"],
   ["suite-hooks", "/suites/s1", (p) => p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)))],
   ["history", "/suites/s1", clickByText("History", "[role=tab]")],
+  ["trends", "/suites/s1", clickByText("Trends", "[role=tab]")],
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],
   ["run-charts", "/runs/r2", showCharts()],

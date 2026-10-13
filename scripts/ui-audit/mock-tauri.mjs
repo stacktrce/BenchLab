@@ -64,6 +64,18 @@ export function tauriMock({ empty, slow = false }) {
     r2: run("r2", "2026-10-13T11:30:00.000Z", candidate, gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2)),
   };
 
+  // A drifting history of one case, oldest first: every 7th run is uncommitted, every 11th has no spread.
+  const series = (caseName) =>
+    Array.from({ length: 24 }, (_, i) => {
+      const mean = (0.042 + i * 0.0004) * (1 + 0.03 * noise()) * (caseName === "regex split" ? 1.3 : 1);
+      const commit = ((i + 1) * 2654435761).toString(16).padEnd(40, "0");
+      return {
+        runId: i === 0 ? "r1" : `h${i}`, startedAt: `2026-09-${String(i + 1).padStart(2, "0")}T10:00:00.000Z`,
+        status: "completed", commit, shortCommit: commit.slice(0, 7), branch: "main", dirty: i % 7 === 6,
+        mean, stddev: i % 11 === 10 ? null : mean * 0.05, median: mean, min: mean * 0.9, max: mean * 1.2, samples: 10,
+      };
+    });
+
   const second = { ...suite, id: "s2", name: "Second suite", cases: [suite.cases[0]] };
   // Every call is recorded so the audit can wait for what it depends on. `later` answers late and
   // records when the answer is delivered, as "delivered:<label>".
@@ -101,6 +113,10 @@ export function tauriMock({ empty, slow = false }) {
         case "cancel_run":
           finishRun?.();
           return true;
+        case "case_names":
+          return empty ? [] : baseline.map((b) => b.command);
+        case "case_series":
+          return empty ? [] : series(args.caseName);
         case "get_run":
           return slow && args.id === "r1" ? later(runs.r1, 800, "get_run:r1") : runs[args.id];
         default:

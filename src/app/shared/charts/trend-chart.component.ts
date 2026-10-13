@@ -48,7 +48,7 @@ import { ChartFrameComponent } from "./chart-frame.component";
                 [class.active]="i === active()"
                 [attr.cx]="point.x"
                 [attr.cy]="point.y"
-                [attr.r]="point.isBaseline || i === active() ? 5 : 3.5"
+                [attr.r]="point.isBaseline ? 5 : 3.5"
               />
             }
           </svg>
@@ -94,7 +94,7 @@ import { ChartFrameComponent } from "./chart-frame.component";
       fill: var(--accent);
       stroke: var(--bg);
     }
-    .dot.active {
+    .plot:focus-within .dot.active {
       stroke: var(--focus);
       stroke-width: 2;
     }
