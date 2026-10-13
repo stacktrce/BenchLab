@@ -38,6 +38,7 @@ export function tauriMock({ empty }) {
     cases: baseline.map((b, i) => ({
       id: `c${i}`, name: b.command, command: `node bench/${["concat", "join", "template", "split"][i]}.js`,
       setupCommand: i === 3 ? "node bench/prepare.js" : null, cleanupCommand: null, workingDirectory: null, enabled: true,
+      budgetPercent: [5, null, 10, 20][i],
     })),
   };
 

@@ -69,6 +69,7 @@ export class SuiteEditorComponent {
       cleanupCommand: this.fb.control(c?.cleanupCommand ?? ""),
       workingDirectory: this.fb.control(c?.workingDirectory ?? ""),
       enabled: this.fb.control(c?.enabled ?? true),
+      budgetPercent: this.fb.control<number | null>(c?.budgetPercent ?? null),
     });
   }
 
@@ -122,6 +123,7 @@ export class SuiteEditorComponent {
         setupCommand: c.setupCommand || null,
         cleanupCommand: c.cleanupCommand || null,
         workingDirectory: c.workingDirectory || null,
+        budgetPercent: c.budgetPercent ?? null,
       })),
     };
   }

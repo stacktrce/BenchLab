@@ -33,6 +33,14 @@ describe("validateSuite", () => {
     expect(validateSuite({ ...ok, warmup: 1.5 })).toHaveLength(1);
   });
 
+  it("accepts an empty budget and rejects zero or negative ones", () => {
+    const withBudget = (budgetPercent: number | null) => ({ ...ok, cases: [{ name: "a", command: "echo", budgetPercent }] });
+    expect(validateSuite(withBudget(null))).toEqual([]);
+    expect(validateSuite(withBudget(5))).toEqual([]);
+    expect(validateSuite(withBudget(0))).toEqual(['Case "a": budget must be a number above 0.']);
+    expect(validateSuite(withBudget(-3))).toHaveLength(1);
+  });
+
   it("requires at least one case", () => {
     expect(validateSuite({ ...ok, cases: [] })).toEqual(["Add at least one case."]);
   });

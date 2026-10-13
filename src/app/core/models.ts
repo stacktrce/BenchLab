@@ -7,6 +7,8 @@ export interface SuiteCase {
   cleanupCommand: string | null;
   workingDirectory: string | null;
   enabled: boolean;
+  /** Flag the case when it is slower than the baseline by more than this many percent. Absent in snapshots from before budgets existed. */
+  budgetPercent?: number | null;
 }
 
 export interface Suite {

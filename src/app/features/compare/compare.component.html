@@ -86,6 +86,9 @@
       @if (s.unmatched) {
         <span>{{ s.unmatched }} unmatched</span>
       }
+      @if (s.overBudget) {
+        <span class="bad-t on">{{ s.overBudget }} over budget</span>
+      }
     </p>
 
     @if (rows().length > 8) {
@@ -148,6 +151,15 @@
                 @case ("slower") { <span class="bad-t strong">Slower</span> }
                 @case ("inconclusive") { <span class="faint">Within noise</span> }
                 @default { <span class="faint">—</span> }
+              }
+              @if (row.budget; as b) {
+                <div class="budget" [class.bad-t]="b.status === 'breach'" [class.faint]="b.status !== 'breach'">
+                  @switch (b.status) {
+                    @case ("breach") { Over the {{ b.percent }}% budget }
+                    @case ("within") { Within the {{ b.percent }}% budget }
+                    @default { {{ b.percent }}% budget: data cannot tell }
+                  }
+                </div>
               }
             </td>
           </tr>

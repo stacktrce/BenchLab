@@ -82,7 +82,7 @@
                 <input class="mono" formControlName="command" placeholder="command to time"
                        [attr.aria-label]="'Command of case ' + (i + 1)" autocomplete="off" spellcheck="false" />
                 <details>
-                  <summary>Setup, cleanup and directory</summary>
+                  <summary>Setup, cleanup, directory and budget</summary>
                   <div class="hooks">
                     <label>Setup <span class="faint">runs once before timing</span>
                       <input class="mono" formControlName="setupCommand" spellcheck="false" />
@@ -92,6 +92,10 @@
                     </label>
                     <label>Working directory
                       <input class="mono" formControlName="workingDirectory" spellcheck="false" />
+                    </label>
+                    <label>Regression budget, percent slower <span class="faint">optional</span>
+                      <input class="num budget" type="number" min="0" step="any" formControlName="budgetPercent" />
+                      <span class="faint">Comparisons flag this case only when the data confidently shows it more than this much slower than the baseline.</span>
                     </label>
                   </div>
                 </details>

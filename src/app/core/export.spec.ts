@@ -112,10 +112,22 @@ describe("comparison exports", () => {
     expect(comparisonToMarkdown(rows, record(), record())).not.toContain("Configuration differs");
   });
 
+  it("lists regression budgets with their status and omits the section when there are none", () => {
+    const budgeted = rows.map((r) =>
+      r.name === "fast" ? { ...r, budget: { percent: 5, status: "within" as const } } : r,
+    );
+    const md = comparisonToMarkdown(budgeted, record(), record());
+    expect(md).toContain("## Regression budgets");
+    expect(md).toContain("| fast | 5% |");
+    expect(md).toContain("within budget");
+    expect(comparisonToMarkdown(rows, record(), record())).not.toContain("Regression budgets");
+  });
+
   it("exports machine-readable rows", () => {
     const [header, fast] = comparisonToCsv(rows).trimEnd().split("\r\n");
     expect(header.startsWith("case,kind,baseline_mean_s")).toBe(true);
     expect(fast.startsWith("fast,matched,1,0.5,-0.5,-50,")).toBe(true);
     expect(fast).toContain(",faster,");
+    expect(header.endsWith("budget_pct,budget_status")).toBe(true);
   });
 });
