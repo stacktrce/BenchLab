@@ -32,9 +32,9 @@ pub fn run() {
             suites::commands::duplicate_suite_cmd,
             suites::commands::delete_suite_cmd,
             suites::commands::set_baseline_cmd,
-            runs::run_suite,
-            runs::list_runs_cmd,
-            runs::get_run_cmd,
+            runs::commands::run_suite,
+            runs::commands::list_runs_cmd,
+            runs::commands::get_run_cmd,
             demo::load_demo_cmd,
             files::write_text_file,
         ])

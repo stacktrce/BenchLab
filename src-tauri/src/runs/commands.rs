@@ -1,0 +1,48 @@
+use super::execute::execute_suite;
+use super::model::{RunDetail, RunRecord};
+use super::store::{get_run, insert_run, list_runs};
+use crate::db::{Db, now_iso};
+use crate::hyperfine::{self, RunControl};
+use crate::suites::load_suite;
+use tauri::State;
+
+/// Runs the saved suite. The frontend must have shown the user every command first.
+#[tauri::command]
+pub async fn run_suite(
+    db: State<'_, Db>,
+    control: State<'_, RunControl>,
+    suite_id: String,
+) -> Result<RunDetail, String> {
+    let suite = db.with(|c| load_suite(c, &suite_id))?;
+    if !suite.cases.iter().any(|c| c.enabled) {
+        return Err("No enabled cases to run.".to_string());
+    }
+    let hyperfine_path = hyperfine::locate_hyperfine()?;
+    let started_at = db.with(now_iso)?;
+    let active = control.begin()?;
+    let cancel = active.flag();
+
+    let (suite, tool_version, outcome) = tauri::async_runtime::spawn_blocking(move || {
+        let version = hyperfine::tool_version(&hyperfine_path);
+        let outcome = execute_suite(&hyperfine_path, &suite, &cancel);
+        (suite, version, outcome)
+    })
+    .await
+    .map_err(|e| format!("Suite run failed: {e}"))?;
+
+    db.with(|c| insert_run(c, &suite, &started_at, &tool_version, &outcome))
+}
+
+#[tauri::command]
+pub fn list_runs_cmd(
+    db: State<'_, Db>,
+    suite_id: Option<String>,
+    limit: Option<i64>,
+) -> Result<Vec<RunRecord>, String> {
+    db.with(|c| list_runs(c, suite_id.as_deref(), limit.unwrap_or(50)))
+}
+
+#[tauri::command]
+pub fn get_run_cmd(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
+    db.with(|c| get_run(c, &id))
+}

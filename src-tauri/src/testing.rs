@@ -1,6 +1,7 @@
 //! Builders and guards shared by the Rust tests.
 
 use crate::hyperfine;
+use crate::runs::SuiteOutcome;
 use crate::suites::{Case, Suite};
 use std::path::PathBuf;
 use std::process::Command;
@@ -44,4 +45,16 @@ pub fn real_hyperfine() -> Option<PathBuf> {
 /// Tests that build real repositories return early when git is not installed.
 pub fn git_available() -> bool {
     Command::new("git").arg("--version").output().is_ok()
+}
+
+/// A run outcome with `results` completed cases and `errors` failed ones.
+pub fn outcome(results: usize, errors: usize) -> SuiteOutcome {
+    SuiteOutcome {
+        results: (0..results)
+            .map(|i| serde_json::json!({ "command": format!("c{i}") }))
+            .collect(),
+        errors: (0..errors).map(|i| format!("e{i}")).collect(),
+        case_count: (results + errors) as i64,
+        git: Vec::new(),
+    }
 }
