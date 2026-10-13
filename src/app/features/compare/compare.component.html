@@ -20,7 +20,7 @@
     <div class="pickers">
       <label>
         <span>Baseline</span>
-        <select (change)="pick('baseline', $event)">
+        <select #baselinePicker (change)="pick('baseline', baselinePicker.value)">
           @for (r of runs(); track r.id) {
             <option [value]="r.id" [selected]="r.id === baselineRun()?.record?.id" [disabled]="r.id === cand.record.id">
               {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}
@@ -34,7 +34,7 @@
       </button>
       <label>
         <span>Candidate</span>
-        <select (change)="pick('candidate', $event)">
+        <select #candidatePicker (change)="pick('candidate', candidatePicker.value)">
           @for (r of runs(); track r.id) {
             <option [value]="r.id" [selected]="r.id === cand.record.id" [disabled]="r.id === baselineRun()?.record?.id">
               {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}

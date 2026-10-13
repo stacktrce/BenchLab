@@ -4,6 +4,7 @@ import {
   CaseMetrics,
   HyperfineParseError,
 } from "./hyperfine.types";
+import { errorMessage } from "../errors";
 
 type Json = Record<string, unknown>;
 
@@ -27,7 +28,7 @@ export function parseHyperfineJSON(json: string): BenchmarkResult {
   try {
     root = JSON.parse(json);
   } catch (e) {
-    throw new HyperfineParseError(`Invalid JSON: ${(e as Error).message}`);
+    throw new HyperfineParseError(`Invalid JSON: ${errorMessage(e)}`);
   }
   if (!isObject(root) || !Array.isArray(root["results"])) {
     throw new HyperfineParseError('Missing "results" array');

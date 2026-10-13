@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from "@
 import { Router, RouterLink } from "@angular/router";
 import { chooseBaseline } from "../../core/baseline";
 import { applyBudgets, ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
+import { errorMessage } from "../../core/errors";
 import { comparisonToCsv, comparisonToMarkdown } from "../../core/export";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { Latest } from "../../core/latest";
@@ -132,7 +133,7 @@ export class CompareComponent {
       const c = this.parse(candidate, "Candidate");
       if (b && c) this.rows.set(applyBudgets(compareRuns(b, c), candidate.config));
     } catch (e) {
-      if (isCurrent()) this.message.set(String(e));
+      if (isCurrent()) this.message.set(errorMessage(e));
     } finally {
       if (isCurrent()) this.loading.set(false);
     }
@@ -146,13 +147,12 @@ export class CompareComponent {
     try {
       return parseHyperfineJSON(run.rawOutput);
     } catch (e) {
-      this.message.set(`${label} output could not be parsed: ${(e as Error).message}`);
+      this.message.set(`${label} output could not be parsed: ${errorMessage(e)}`);
       return null;
     }
   }
 
-  pick(which: "baseline" | "candidate", event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  pick(which: "baseline" | "candidate", value: string): void {
     this.router.navigate([], {
       queryParams: {
         candidate: this.candidateRun()?.record.id,

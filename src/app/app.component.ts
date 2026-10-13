@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { ActiveRunService } from "./core/active-run.service";
 import { BenchmarkRunnerService } from "./core/benchmark-runner.service";
+import { errorMessage } from "./core/errors";
 import { ToolInfo } from "./core/parser/hyperfine.types";
 import { SuiteApiService } from "./core/suite-api.service";
 import { ThemeService } from "./core/theme.service";
@@ -32,15 +33,15 @@ export class AppComponent {
     this.runner
       .findHyperfine()
       .then((t) => this.tool.set(t))
-      .catch((e) => this.toolError.set(String(e)));
-    this.api.refresh().catch((e) => this.toast.show(`Could not load suites: ${e}`, "error"));
+      .catch((e) => this.toolError.set(errorMessage(e)));
+    this.api.refresh().catch((e) => this.toast.show(`Could not load suites: ${errorMessage(e)}`, "error"));
   }
 
   protected async cancelActive(): Promise<void> {
     try {
       await this.api.cancelRun();
     } catch (e) {
-      this.toast.show(`Could not cancel: ${e}`, "error");
+      this.toast.show(`Could not cancel: ${errorMessage(e)}`, "error");
     }
   }
 
@@ -49,7 +50,7 @@ export class AppComponent {
       const id = await this.api.loadDemo();
       await this.router.navigate(["/suites", id]);
     } catch (e) {
-      this.toast.show(`Could not load sample data: ${e}`, "error");
+      this.toast.show(`Could not load sample data: ${errorMessage(e)}`, "error");
     }
   }
 }

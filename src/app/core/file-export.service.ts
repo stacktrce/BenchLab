@@ -1,6 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
+import { errorMessage } from "./errors";
 import { ToastService } from "./toast.service";
 
 export function exportFileName(base: string, ext: "md" | "csv", date = new Date()): string {
@@ -22,7 +23,7 @@ export class FileExportService {
       await invoke("write_text_file", { path, content });
       this.toast.show(`Exported to ${path}`);
     } catch (e) {
-      this.toast.show(`Export failed: ${e}`, "error");
+      this.toast.show(`Export failed: ${errorMessage(e)}`, "error");
     }
   }
 
@@ -31,7 +32,7 @@ export class FileExportService {
       await navigator.clipboard.writeText(text);
       this.toast.show("Copied to clipboard");
     } catch (e) {
-      this.toast.show(`Copy failed: ${e}`, "error");
+      this.toast.show(`Copy failed: ${errorMessage(e)}`, "error");
     }
   }
 }

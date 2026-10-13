@@ -173,19 +173,19 @@ export function comparisonToMarkdown(
     out.push("## Configuration differs between the runs", "", ...configChanges.map((c) => `- ${c}`), "");
   }
 
-  const budgeted = rows.filter((r) => r.budget);
+  const budgeted = rows.flatMap((row) => (row.budget ? [{ row, budget: row.budget }] : []));
   if (budgeted.length) {
     out.push(
       "## Regression budgets",
       "",
       table(
         ["Case", "Budget", "Change", "95% interval", "Status"],
-        budgeted.map((r) => [
-          cell(r.name),
-          `${r.budget!.percent}%`,
-          percent(r.deltaPercent),
-          r.deltaPercentInterval ? interval(r.deltaPercentInterval.low, r.deltaPercentInterval.high, (n) => percent(n)) : "—",
-          BUDGET_TEXT[r.budget!.status],
+        budgeted.map(({ row, budget }) => [
+          cell(row.name),
+          `${budget.percent}%`,
+          percent(row.deltaPercent),
+          row.deltaPercentInterval ? interval(row.deltaPercentInterval.low, row.deltaPercentInterval.high, (n) => percent(n)) : "—",
+          BUDGET_TEXT[budget.status],
         ]),
         1,
       ),

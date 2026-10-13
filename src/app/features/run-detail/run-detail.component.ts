@@ -1,6 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { RouterLink } from "@angular/router";
+import { errorMessage } from "../../core/errors";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { Latest } from "../../core/latest";
 import { runToCsv, runToMarkdown } from "../../core/export";
@@ -63,11 +64,11 @@ export class RunDetailComponent {
         try {
           this.result.set(parseHyperfineJSON(detail.rawOutput));
         } catch (e) {
-          this.error.set(`Stored output could not be parsed: ${(e as Error).message}`);
+          this.error.set(`Stored output could not be parsed: ${errorMessage(e)}`);
         }
       }
     } catch (e) {
-      if (isCurrent()) this.error.set(String(e));
+      if (isCurrent()) this.error.set(errorMessage(e));
     }
   }
 
@@ -79,7 +80,7 @@ export class RunDetailComponent {
       this.suite.set(await this.api.setBaseline(d.record.suiteId, pin ? d.record.id : null));
       this.toast.show(pin ? "Pinned as the baseline for this suite" : "Baseline cleared");
     } catch (e) {
-      this.toast.show(String(e), "error");
+      this.toast.show(errorMessage(e), "error");
     }
   }
 

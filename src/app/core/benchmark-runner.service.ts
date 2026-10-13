@@ -1,6 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { ActiveRunService } from "./active-run.service";
+import { errorMessage } from "./errors";
 import { parseHyperfineJSON } from "./parser/hyperfine.parser";
 import { BenchmarkResult, RunOutput, ToolInfo } from "./parser/hyperfine.types";
 
@@ -39,7 +40,7 @@ export class BenchmarkRunnerService {
         }),
       );
     } catch (e) {
-      return { kind: "error", message: String(e) };
+      return { kind: "error", message: errorMessage(e) };
     }
 
     if (output.cancelled) {
@@ -58,7 +59,7 @@ export class BenchmarkRunnerService {
     try {
       return { kind: "success", result: parseHyperfineJSON(output.json), output };
     } catch (e) {
-      return { kind: "error", message: (e as Error).message, output };
+      return { kind: "error", message: errorMessage(e), output };
     }
   }
 }

@@ -3,6 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { ActiveRunService } from "../../core/active-run.service";
 import { BenchmarkRunnerService, RunOutcome } from "../../core/benchmark-runner.service";
+import { errorMessage } from "../../core/errors";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon.component";
@@ -43,7 +44,7 @@ export class QuickRunComponent {
     this.runner
       .findHyperfine()
       .then(() => this.hyperfineFound.set(true))
-      .catch((e) => this.hyperfineError.set(String(e)));
+      .catch((e) => this.hyperfineError.set(errorMessage(e)));
   }
 
   canReview(): boolean {
@@ -79,7 +80,7 @@ export class QuickRunComponent {
     try {
       await this.runner.cancel();
     } catch (e) {
-      this.toast.show(`Could not cancel: ${e}`, "error");
+      this.toast.show(`Could not cancel: ${errorMessage(e)}`, "error");
     }
   }
 
@@ -88,7 +89,7 @@ export class QuickRunComponent {
       const id = await this.api.loadDemo();
       await this.router.navigate(["/suites", id]);
     } catch (e) {
-      this.toast.show(`Could not load sample data: ${e}`, "error");
+      this.toast.show(`Could not load sample data: ${errorMessage(e)}`, "error");
     }
   }
 }

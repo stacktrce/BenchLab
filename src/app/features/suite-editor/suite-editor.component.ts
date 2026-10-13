@@ -3,6 +3,7 @@ import { Component, computed, DestroyRef, effect, inject, input, signal, untrack
 import { FormArray, NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
 import { ActiveRunService } from "../../core/active-run.service";
+import { errorMessage } from "../../core/errors";
 import { Latest } from "../../core/latest";
 import { RunRecord, Suite } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
@@ -92,7 +93,7 @@ export class SuiteEditorComponent {
     } catch (e) {
       if (!isCurrent()) return;
       this.saved.set(null);
-      this.loadError.set(String(e));
+      this.loadError.set(errorMessage(e));
     }
   }
 
@@ -136,7 +137,7 @@ export class SuiteEditorComponent {
         this.form.markAsPristine();
       }
     } catch (e) {
-      this.problems.set(String(e).split("\n"));
+      this.problems.set(errorMessage(e).split("\n"));
     } finally {
       this.busy.set("");
     }
@@ -149,7 +150,7 @@ export class SuiteEditorComponent {
       const copy = await this.api.duplicateSuite(id);
       await this.router.navigate(["/suites", copy.id]);
     } catch (e) {
-      this.problems.set(String(e).split("\n"));
+      this.problems.set(errorMessage(e).split("\n"));
     }
   }
 
@@ -161,7 +162,7 @@ export class SuiteEditorComponent {
       this.toast.show("Suite deleted");
       await this.router.navigate(["/quick"]);
     } catch (e) {
-      this.problems.set(String(e).split("\n"));
+      this.problems.set(errorMessage(e).split("\n"));
     }
   }
 
@@ -171,9 +172,10 @@ export class SuiteEditorComponent {
   }
 
   runBlockedReason(): string {
-    if (!this.saved()) return "Save the suite first";
+    const suite = this.saved();
+    if (!suite) return "Save the suite first";
     if (this.form.dirty) return "Save your changes before running";
-    if (!this.saved()!.cases.some((c) => c.enabled)) return "Enable at least one case";
+    if (!suite.cases.some((c) => c.enabled)) return "Enable at least one case";
     if (this.activeRun.current()) return "Another benchmark is running";
     return "";
   }
@@ -202,7 +204,7 @@ export class SuiteEditorComponent {
     try {
       await this.api.cancelRun();
     } catch (e) {
-      this.toast.show(`Could not cancel: ${e}`, "error");
+      this.toast.show(`Could not cancel: ${errorMessage(e)}`, "error");
     }
   }
 
@@ -219,8 +221,8 @@ export class SuiteEditorComponent {
       if (stillHere()) await this.router.navigate(["/runs", detail.record.id]);
       else this.toast.show(`Run finished: ${suite.name}. Open it from Recent runs.`);
     } catch (e) {
-      if (stillHere()) this.problems.set(String(e).split("\n"));
-      else this.toast.show(`Run failed: ${e}`, "error");
+      if (stillHere()) this.problems.set(errorMessage(e).split("\n"));
+      else this.toast.show(`Run failed: ${errorMessage(e)}`, "error");
     }
   }
 }
