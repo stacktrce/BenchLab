@@ -4,23 +4,32 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { errorMessage } from "./errors";
 import { ToastService } from "./toast.service";
 
-export function exportFileName(base: string, ext: "md" | "csv", date = new Date()): string {
+export function exportFileName(base: string, ext: "md" | "csv" | "svg" | "png", date = new Date()): string {
   const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "benchlab";
   return `${slug}-${date.toISOString().slice(0, 10)}.${ext}`;
 }
+
+const FILTER_NAMES = { md: "Markdown", csv: "CSV", svg: "SVG image", png: "PNG image" };
 
 @Injectable({ providedIn: "root" })
 export class FileExportService {
   private readonly toast = inject(ToastService);
 
-  async save(defaultName: string, content: string, ext: "md" | "csv"): Promise<void> {
+  async save(defaultName: string, content: string, ext: "md" | "csv" | "svg"): Promise<void> {
+    await this.write(defaultName, FILTER_NAMES[ext], ext, (path) => invoke("write_text_file", { path, content }));
+  }
+
+  async saveImage(defaultName: string, bytes: Uint8Array): Promise<void> {
+    await this.write(defaultName, FILTER_NAMES.png, "png", (path) =>
+      invoke("write_binary_file", { path, bytes: Array.from(bytes) }),
+    );
+  }
+
+  private async write(defaultName: string, filterName: string, ext: string, write: (path: string) => Promise<unknown>): Promise<void> {
     try {
-      const path = await save({
-        defaultPath: defaultName,
-        filters: [{ name: ext === "md" ? "Markdown" : "CSV", extensions: [ext] }],
-      });
+      const path = await save({ defaultPath: defaultName, filters: [{ name: filterName, extensions: [ext] }] });
       if (!path) return;
-      await invoke("write_text_file", { path, content });
+      await write(path);
       this.toast.show(`Exported to ${path}`);
     } catch (e) {
       this.toast.show(`Export failed: ${errorMessage(e)}`, "error");
