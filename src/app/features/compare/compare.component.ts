@@ -5,6 +5,7 @@ import { chooseBaseline } from "../../core/baseline";
 import { applyBudgets, ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
 import { comparisonToCsv, comparisonToMarkdown } from "../../core/export";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
+import { Latest } from "../../core/latest";
 import { PAGE_SIZE } from "../../core/paging";
 import { ms, percent, signedMs } from "../../core/format";
 import { RunDetail, RunRecord } from "../../core/models";
@@ -28,6 +29,7 @@ export class CompareComponent {
   private readonly api = inject(SuiteApiService);
   private readonly router = inject(Router);
   private readonly files = inject(FileExportService);
+  private readonly latestLoad = new Latest();
 
   readonly runs = signal<RunRecord[]>([]);
   readonly baselineRun = signal<RunDetail | null>(null);
@@ -85,6 +87,7 @@ export class CompareComponent {
   }
 
   private async load(candidateId?: string, baselineId?: string): Promise<void> {
+    const isCurrent = this.latestLoad.begin();
     this.baselineRun.set(null);
     this.candidateRun.set(null);
     this.rows.set([]);
@@ -99,12 +102,14 @@ export class CompareComponent {
     try {
       const candidate = await this.api.getRun(candidateId);
       const runs = await this.api.listRuns(candidate.record.suiteId, 200);
+      if (!isCurrent()) return;
       this.runs.set(runs);
       this.candidateRun.set(candidate);
 
       let resolvedBaseline = baselineId;
       if (!resolvedBaseline) {
         const suite = await this.api.getSuite(candidate.record.suiteId);
+        if (!isCurrent()) return;
         const choice = chooseBaseline(runs, candidateId, suite.baselineRunId);
         resolvedBaseline = choice?.id;
         this.autoBaseline.set(choice?.reason ?? null);
@@ -118,6 +123,7 @@ export class CompareComponent {
         return;
       }
       const baseline = await this.api.getRun(resolvedBaseline);
+      if (!isCurrent()) return;
       if (baseline.record.suiteId !== candidate.record.suiteId) {
         this.message.set("These runs belong to different suites and cannot be compared.");
         return;
@@ -127,9 +133,9 @@ export class CompareComponent {
       const c = this.parse(candidate, "Candidate");
       if (b && c) this.rows.set(applyBudgets(compareRuns(b, c), candidate.config));
     } catch (e) {
-      this.message.set(String(e));
+      if (isCurrent()) this.message.set(String(e));
     } finally {
-      this.loading.set(false);
+      if (isCurrent()) this.loading.set(false);
     }
   }
 
