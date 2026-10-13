@@ -108,3 +108,7 @@ Layout:
 Tested on Windows. The macOS and Linux builds are set up in CI (`.github/workflows/ci.yml`) but have not been run by the author yet. Installers are not code-signed, so Windows SmartScreen and macOS Gatekeeper will warn.
 
 Third-party licences: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Progress
+
+Currently in Alpha, more features such as Graph Generation, Logging , Live Analysis , History are still in the making and will be implemented. I did (and will continue to) use AI for this project in order to speed up my progress. 
