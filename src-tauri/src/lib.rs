@@ -23,9 +23,9 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            hyperfine::find_hyperfine,
-            hyperfine::run_benchmark,
-            hyperfine::cancel_run,
+            hyperfine::commands::find_hyperfine,
+            hyperfine::commands::run_benchmark,
+            hyperfine::commands::cancel_run,
             suites::list_suites_cmd,
             suites::get_suite,
             suites::save_suite_cmd,

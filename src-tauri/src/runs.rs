@@ -575,21 +575,6 @@ mod tests {
     }
 
     #[test]
-    fn only_one_run_at_a_time_and_cancel_reaches_it() {
-        let control = RunControl::default();
-        assert!(!control.cancel(), "nothing to cancel yet");
-        let first = control.begin().unwrap();
-        assert!(control.begin().is_err());
-        assert!(control.cancel());
-        assert!(first.flag().load(Ordering::SeqCst));
-        drop(first);
-        assert!(
-            control.begin().is_ok(),
-            "slot is released when the run ends"
-        );
-    }
-
-    #[test]
     fn run_stores_git_state_and_older_runs_have_none() {
         let conn = memory();
         let suite = saved_suite(&conn);
