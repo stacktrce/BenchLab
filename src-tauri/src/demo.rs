@@ -42,7 +42,7 @@ fn result_for(spec: &Spec, seed: u64) -> Value {
     let mean = times.iter().sum::<f64>() / n;
     let stddev = (times.iter().map(|t| (t - mean).powi(2)).sum::<f64>() / (n - 1.0)).sqrt();
     let mut sorted = times.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_by(f64::total_cmp);
     let median = sorted[sorted.len() / 2];
     json!({
         "command": spec.name,

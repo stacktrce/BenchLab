@@ -111,8 +111,12 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
             buf
         })
     };
-    let out_h = drain(Box::new(child.stdout.take().expect("piped stdout")));
-    let err_h = drain(Box::new(child.stderr.take().expect("piped stderr")));
+    let (Some(stdout), Some(stderr)) = (child.stdout.take(), child.stderr.take()) else {
+        kill_tree(&mut child);
+        return Err("Could not capture hyperfine's output".to_string());
+    };
+    let out_h = drain(Box::new(stdout));
+    let err_h = drain(Box::new(stderr));
 
     let started = Instant::now();
     let mut cancelled = false;
