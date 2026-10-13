@@ -48,7 +48,6 @@ export interface ComparisonRow {
   deltaInterval?: Interval;
   deltaPercentInterval?: Interval | null;
   verdict?: Verdict;
-  /** Present when the case has a regression budget. */
   budget?: BudgetResult;
   caveats: string[];
 }

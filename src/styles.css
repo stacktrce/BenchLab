@@ -148,7 +148,6 @@ pre {
   color: var(--ink-3);
 }
 
-/* Controls */
 input,
 select,
 textarea {
@@ -258,7 +257,6 @@ kbd {
   border-radius: 3px;
 }
 
-/* Page frame */
 .page {
   max-width: 920px;
   padding: 0 32px 48px;
@@ -319,7 +317,6 @@ kbd {
   border-bottom: 1px solid var(--line-strong);
 }
 
-/* Messages: a rule on the left, no boxes */
 .note {
   margin: 12px 0;
   padding: 2px 0 2px 12px;
@@ -352,7 +349,6 @@ kbd {
   font-weight: 500;
 }
 
-/* Status as a dot and a word */
 .status {
   display: inline-flex;
   align-items: center;
@@ -379,7 +375,6 @@ kbd {
   background: var(--bad);
 }
 
-/* Data tables */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -419,7 +414,6 @@ pre {
   border-left: 2px solid var(--line-strong);
 }
 
-/* Modal */
 .backdrop {
   position: fixed;
   inset: 0;

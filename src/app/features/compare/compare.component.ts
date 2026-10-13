@@ -42,7 +42,6 @@ export class CompareComponent {
 
   readonly summary = computed(() => summarize(this.rows()));
 
-  /** Large suites: optionally hide cases that did not change, and render in pages. */
   readonly hideNoise = signal(false);
   readonly limit = signal(PAGE_SIZE);
   protected readonly pageSize = PAGE_SIZE;

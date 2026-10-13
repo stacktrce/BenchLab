@@ -1,4 +1,4 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// Without this attribute a release build opens a console window on Windows.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {

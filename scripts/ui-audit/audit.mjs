@@ -123,7 +123,6 @@ async function auditAxe(browser) {
       await new Promise((r) => setTimeout(r, 250));
       await page.evaluate(AXE_SOURCE);
       const { violations } = await page.evaluate(() =>
-        // eslint-disable-next-line no-undef
         axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } }),
       );
       check(violations.length === 0, `axe ${scheme}/${name}`);

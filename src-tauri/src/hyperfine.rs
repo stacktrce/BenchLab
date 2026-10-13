@@ -98,17 +98,14 @@ fn registry_path_dirs() -> Vec<PathBuf> {
 #[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Source {
-    /// Path given in BENCHLAB_HYPERFINE.
     Override,
-    /// The sidecar shipped next to the app executable.
     Bundled,
-    /// Found on the system PATH.
     System,
 }
 
 pub const OVERRIDE_ENV: &str = "BENCHLAB_HYPERFINE";
 
-/// Resolution order: explicit override, bundled sidecar, system PATH. Pure so it can be tested.
+/// Resolution order: explicit override, bundled sidecar, system PATH.
 fn resolve(
     override_path: Option<PathBuf>,
     bundled_dir: Option<PathBuf>,
@@ -215,7 +212,7 @@ fn flag(name: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
     arg
 }
 
-/// Blocking: runs hyperfine for one command, killing it after `job.timeout`.
+/// Blocking: call it from `spawn_blocking`, never on the async runtime.
 pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)

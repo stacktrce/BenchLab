@@ -1,7 +1,5 @@
 import { GitInfo } from "./models";
 
-/** Display formatting shared by views and exports. Time inputs are seconds. */
-
 /** "main @ 9f2c1d4", with the uncommitted file count when the tree was dirty. */
 export function describeGit(g: GitInfo): string {
   const where = `${g.branch ?? "detached"} @ ${g.shortCommit}`;
