@@ -5,6 +5,7 @@ pub mod commands;
 mod control;
 mod locate;
 mod process;
+mod tree;
 
 pub use control::RunControl;
 pub use locate::{locate_hyperfine, tool_version};
