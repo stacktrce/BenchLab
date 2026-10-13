@@ -46,6 +46,13 @@
     </div>
 
     <div class="grow-space"></div>
+    @if (active.current(); as run) {
+      <div class="active-run" role="status">
+        <span class="dot running"></span>
+        <span class="grow" [title]="run.label">Running {{ run.label }}</span>
+        <button type="button" class="quiet" (click)="cancelActive()">Cancel</button>
+      </div>
+    }
     <div class="tool" [class.bad]="toolError()" [title]="toolError() ?? tool()?.path ?? ''">
       <span class="dot" [class.failed]="toolError()" [class.completed]="tool()"></span>
       @if (toolError()) {

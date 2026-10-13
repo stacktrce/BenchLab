@@ -1,5 +1,6 @@
-import { Injectable, signal } from "@angular/core";
+import { inject, Injectable, signal } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
+import { ActiveRunService } from "./active-run.service";
 import { RunDetail, RunRecord, Suite, SuiteSummary } from "./models";
 
 const RECENT_RUNS = 8;
@@ -7,6 +8,7 @@ const RECENT_RUNS = 8;
 /** Typed wrapper over the Rust commands, plus the lists the sidebar shows. */
 @Injectable({ providedIn: "root" })
 export class SuiteApiService {
+  private readonly activeRun = inject(ActiveRunService);
   readonly suites = signal<SuiteSummary[]>([]);
   readonly recentRuns = signal<RunRecord[]>([]);
 
@@ -65,12 +67,14 @@ export class SuiteApiService {
     return invoke<boolean>("cancel_run");
   }
 
-  /** Call only after the user has confirmed the exact commands. */
-  async runSuite(suiteId: string): Promise<RunDetail> {
-    try {
-      return await invoke<RunDetail>("run_suite", { suiteId });
-    } finally {
-      await this.refresh();
-    }
+  /** Call only after the user has confirmed the exact commands. `label` is what the sidebar shows while it runs. */
+  runSuite(suiteId: string, label: string): Promise<RunDetail> {
+    return this.activeRun.track({ label, suiteId }, async () => {
+      try {
+        return await invoke<RunDetail>("run_suite", { suiteId });
+      } finally {
+        await this.refresh();
+      }
+    });
   }
 }

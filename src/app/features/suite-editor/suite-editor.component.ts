@@ -1,7 +1,8 @@
 import { DatePipe } from "@angular/common";
-import { Component, effect, inject, input, signal, untracked } from "@angular/core";
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from "@angular/core";
 import { FormArray, NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
+import { ActiveRunService } from "../../core/active-run.service";
 import { Latest } from "../../core/latest";
 import { RunRecord, Suite, SuiteCase } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
@@ -33,6 +34,8 @@ export class SuiteEditorComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly latestLoad = new Latest();
+  private readonly activeRun = inject(ActiveRunService);
+  private destroyed = false;
 
   readonly form = this.fb.group({
     name: this.fb.control(""),
@@ -46,12 +49,18 @@ export class SuiteEditorComponent {
   readonly runs = signal<RunRecord[]>([]);
   readonly problems = signal<string[]>([]);
   readonly loadError = signal<string | null>(null);
-  readonly busy = signal<"" | "saving" | "running">("");
+  readonly busy = signal<"" | "saving">("");
+  /** This suite is the one running now (it may have been started before this page was opened). */
+  readonly running = computed(() => {
+    const suite = this.saved();
+    return !!suite && this.activeRun.current()?.suiteId === suite.id;
+  });
   readonly confirmingRun = signal(false);
   readonly confirmingDelete = signal(false);
   readonly tab = signal<Tab>("cases");
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.destroyed = true));
     effect(() => {
       const id = this.id();
       untracked(() => this.load(id));
@@ -205,13 +214,14 @@ export class SuiteEditorComponent {
 
   canRun(): boolean {
     const s = this.saved();
-    return !!s && !this.form.dirty && s.cases.some((c) => c.enabled) && this.busy() === "";
+    return !!s && !this.form.dirty && s.cases.some((c) => c.enabled) && this.busy() === "" && !this.activeRun.current();
   }
 
   runBlockedReason(): string {
     if (!this.saved()) return "Save the suite first";
     if (this.form.dirty) return "Save your changes before running";
     if (!this.saved()!.cases.some((c) => c.enabled)) return "Enable at least one case";
+    if (this.activeRun.current()) return "Another benchmark is running";
     return "";
   }
 
@@ -256,18 +266,20 @@ export class SuiteEditorComponent {
   }
 
   async runConfirmed(): Promise<void> {
-    const id = this.saved()?.id;
+    const suite = this.saved();
     this.confirmingRun.set(false);
-    if (!id) return;
-    this.busy.set("running");
+    if (!suite) return;
     this.problems.set([]);
+    // The run goes on if you leave this page, so afterwards only act on this page if you are
+    // still looking at this suite.
+    const stillHere = () => !this.destroyed && this.saved()?.id === suite.id;
     try {
-      const detail = await this.api.runSuite(id);
-      await this.router.navigate(["/runs", detail.record.id]);
+      const detail = await this.api.runSuite(suite.id, suite.name);
+      if (stillHere()) await this.router.navigate(["/runs", detail.record.id]);
+      else this.toast.show(`Run finished: ${suite.name}. Open it from Recent runs.`);
     } catch (e) {
-      this.problems.set(String(e).split("\n"));
-    } finally {
-      this.busy.set("");
+      if (stillHere()) this.problems.set(String(e).split("\n"));
+      else this.toast.show(`Run failed: ${e}`, "error");
     }
   }
 }

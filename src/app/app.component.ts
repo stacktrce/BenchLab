@@ -1,6 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { ActiveRunService } from "./core/active-run.service";
 import { BenchmarkRunnerService } from "./core/benchmark-runner.service";
 import { ToolInfo } from "./core/parser/hyperfine.types";
 import { SuiteApiService } from "./core/suite-api.service";
@@ -17,6 +18,7 @@ import { IconComponent } from "./shared/icon.component";
 export class AppComponent {
   protected readonly api = inject(SuiteApiService);
   protected readonly toast = inject(ToastService);
+  protected readonly active = inject(ActiveRunService);
   protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly runner = inject(BenchmarkRunnerService);
@@ -32,6 +34,14 @@ export class AppComponent {
       .then((t) => this.tool.set(t))
       .catch((e) => this.toolError.set(String(e)));
     this.api.refresh().catch((e) => this.toast.show(`Could not load suites: ${e}`, "error"));
+  }
+
+  protected async cancelActive(): Promise<void> {
+    try {
+      await this.api.cancelRun();
+    } catch (e) {
+      this.toast.show(`Could not cancel: ${e}`, "error");
+    }
   }
 
   protected async loadDemo(): Promise<void> {

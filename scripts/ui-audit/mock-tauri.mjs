@@ -67,6 +67,9 @@ export function tauriMock({ empty, slow = false }) {
   const second = { ...suite, id: "s2", name: "Second suite", cases: [suite.cases[0]] };
   const later = (value, ms) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
+  // A suite run that stays "in progress" until cancelled (or 8 s), like a long benchmark.
+  let finishRun = null;
+
   window.__TAURI_INTERNALS__ = {
     transformCallback: () => 1,
     invoke: async (command, args) => {
@@ -80,6 +83,14 @@ export function tauriMock({ empty, slow = false }) {
         case "get_suite":
           if (args.id === "s2") return second;
           return slow ? later(suite, 800) : suite;
+        case "run_suite":
+          return new Promise((resolve) => {
+            finishRun = () => resolve(runs.r2);
+            setTimeout(finishRun, 8000);
+          });
+        case "cancel_run":
+          finishRun?.();
+          return true;
         case "get_run_cmd":
           return slow && args.id === "r1" ? later(runs.r1, 800) : runs[args.id];
         default:
