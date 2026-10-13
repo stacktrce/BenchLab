@@ -93,6 +93,12 @@ Rust is not meaningfully faster at the sizes that occur (a suite has tens of cas
 
 Revisit only if a feature adds real CPU work on the timing arrays (for example bootstrap confidence intervals or outlier detection over thousands of cases). Try a Web Worker first; move to Rust only if measurement shows the worker is not enough.
 
+### Module map
+
+Rust (`src-tauri/src`): `db` owns the schema and migrations; `suites/`, `runs/` and `hyperfine/` are folders that each split into `model` (types), a storage or process module, and `commands` (the Tauri commands, named without a suffix: `list_suites`, `get_run`); tests sit beside the code or in a `tests.rs` next to a module; `testing.rs` has the shared builders. A new command is registered in `lib.rs` through its `commands` module path, and must also be called from `src/app/core` and answered by the audit mock; `ipc-contract.spec.ts` fails if the three disagree.
+
+TypeScript (`src/app`): `core/` is framework-free logic with specs (`compare/` is one module per concern, `errors.ts` turns anything thrown into text, `latest.ts` guards overlapping loads, `active-run.service.ts` tracks the running benchmark); `features/` has one folder per page, with form mapping and other pure logic in plain files beside the component; `shared/` has components used by several pages.
+
 ### Rust
 
 - `cargo fmt` and `cargo clippy --all-targets -- -D warnings` must be clean.

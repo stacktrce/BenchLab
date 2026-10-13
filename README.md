@@ -96,10 +96,11 @@ Layout:
 
 | Path | What |
 |---|---|
-| `src/app/core` | Parser, comparison statistics, export, validation (framework-free, unit-tested) |
-| `src/app/features` | Quick run, suite editor, run detail, compare |
-| `src-tauri/src` | SQLite and migrations, suite CRUD, process runner and cancellation, demo data, export file writer |
+| `src/app/core` | Parser, comparison statistics (`compare/`), export, validation, error messages (framework-free, unit-tested) |
+| `src/app/features` | Quick run, suite editor (with its form mapping and run confirmation as plain functions), run detail, compare |
+| `src-tauri/src` | `db` (SQLite, migrations), `suites/`, `runs/`, `hyperfine/` (locate, process, run slot, commands), `git`, `demo`, `files`; each folder splits model, storage and Tauri commands |
 | `scripts/fetch-hyperfine.mjs` | Sidecar download and verification |
+| `scripts/ui-audit` | Accessibility, keyboard and regression audit of every screen; `shots-digest.mjs` compares screenshots byte for byte |
 | `AGENTS.md` | Contribution rules: code quality, git workflow, verification |
 
 ## Status
