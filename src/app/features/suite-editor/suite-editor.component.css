@@ -28,7 +28,6 @@
 .title:focus,
 .subtitle:focus {
   border-bottom-color: var(--line-strong);
-  outline: none;
 }
 
 .settings {
