@@ -18,9 +18,7 @@ A desktop app for the question hyperfine leaves to you: **did my change make it 
 
 BenchLab does not replace hyperfine. It runs it for you and records what happened.
 
-## Install
-
-Download the installer for your OS from the releases page. It includes hyperfine 1.20.0, so there is nothing else to install.
+## Good to know
 
 BenchLab looks for hyperfine in this order:
 
