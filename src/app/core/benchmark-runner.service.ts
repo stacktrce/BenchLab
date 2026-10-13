@@ -1,5 +1,6 @@
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
+import { ActiveRunService } from "./active-run.service";
 import { parseHyperfineJSON } from "./parser/hyperfine.parser";
 import { BenchmarkResult, RunOutput, ToolInfo } from "./parser/hyperfine.types";
 
@@ -15,6 +16,8 @@ export type RunOutcome =
 
 @Injectable({ providedIn: "root" })
 export class BenchmarkRunnerService {
+  private readonly activeRun = inject(ActiveRunService);
+
   findHyperfine(): Promise<ToolInfo> {
     return invoke<ToolInfo>("find_hyperfine");
   }
@@ -28,11 +31,13 @@ export class BenchmarkRunnerService {
   async run(req: RunRequest): Promise<RunOutcome> {
     let output: RunOutput;
     try {
-      output = await invoke<RunOutput>("run_benchmark", {
-        command: req.command,
-        workingDir: req.workingDir ?? null,
-        runs: req.runs ?? null,
-      });
+      output = await this.activeRun.track({ label: "Quick run", suiteId: null }, () =>
+        invoke<RunOutput>("run_benchmark", {
+          command: req.command,
+          workingDir: req.workingDir ?? null,
+          runs: req.runs ?? null,
+        }),
+      );
     } catch (e) {
       return { kind: "error", message: String(e) };
     }

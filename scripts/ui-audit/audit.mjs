@@ -88,6 +88,16 @@ const SCREENS = [
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],
   ["confirm", "/suites/s1", clickByText("Run")],
+  [
+    "running",
+    "/suites/s1",
+    async (page) => {
+      await clickByText("Run")(page);
+      await page.waitForSelector(".modal .run");
+      await page.click(".modal .run");
+      await new Promise((r) => setTimeout(r, 300));
+    },
+  ],
 ];
 
 let failures = 0;
@@ -251,6 +261,31 @@ async function auditOverlappingLoads(browser) {
   await detail.close();
 }
 
+/**
+ * A run keeps going when you leave the page that started it. The app must still show it,
+ * let you cancel it from anywhere, and not drag you back to its results when it ends.
+ */
+async function auditRunVisibility(browser) {
+  const page = await openPage(browser, "/suites/s1");
+  await page.evaluate(() => [...document.querySelectorAll(".page-bar button")].find((b) => b.textContent.trim() === "Run").click());
+  await page.waitForSelector(".modal .run");
+  await page.click(".modal .run");
+  await new Promise((r) => setTimeout(r, 300));
+  await navigateInApp(page, "/quick");
+  await new Promise((r) => setTimeout(r, 400));
+
+  check(!!(await page.$("nav .active-run")), "a running benchmark is shown in the sidebar after leaving its page");
+  const cancel = await page.$("nav .active-run button");
+  check(!!cancel, "it can be cancelled from the sidebar");
+  if (cancel) {
+    await cancel.click();
+    await new Promise((r) => setTimeout(r, 600));
+    check(!(await page.$("nav .active-run")), "the indicator goes away once the run ends");
+    check(await page.evaluate(() => location.pathname === "/quick"), "finishing does not pull you away from the page you are on");
+  }
+  await page.close();
+}
+
 const server = await ensureServer();
 const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true });
 try {
@@ -258,6 +293,7 @@ try {
   await auditDialogKeyboard(browser);
   await auditTabOrder(browser);
   await auditOverlappingLoads(browser);
+  await auditRunVisibility(browser);
 } finally {
   await browser.close();
   if (server) stopServer(server);

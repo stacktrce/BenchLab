@@ -1,6 +1,7 @@
 import { Component, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+import { ActiveRunService } from "../../core/active-run.service";
 import { BenchmarkRunnerService, RunOutcome } from "../../core/benchmark-runner.service";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
@@ -21,6 +22,7 @@ export class QuickRunComponent {
   private readonly runner = inject(BenchmarkRunnerService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly activeRun = inject(ActiveRunService);
   protected readonly api = inject(SuiteApiService);
 
   command = "";
@@ -45,7 +47,12 @@ export class QuickRunComponent {
   }
 
   canReview(): boolean {
-    return this.command.trim().length > 0 && this.hyperfineFound() && this.phase() === "editing";
+    return (
+      this.command.trim().length > 0 &&
+      this.hyperfineFound() &&
+      this.phase() === "editing" &&
+      !this.activeRun.current()
+    );
   }
 
   review(): void {
