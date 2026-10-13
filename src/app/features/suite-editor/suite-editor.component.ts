@@ -4,12 +4,13 @@ import { FormArray, NonNullableFormBuilder, ReactiveFormsModule } from "@angular
 import { Router, RouterLink } from "@angular/router";
 import { ActiveRunService } from "../../core/active-run.service";
 import { Latest } from "../../core/latest";
-import { RunRecord, Suite, SuiteCase } from "../../core/models";
+import { RunRecord, Suite } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
 import { IconComponent } from "../../shared/icon.component";
 import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm.component";
+import { createCaseGroup, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
 
 type Tab = "cases" | "history";
 
@@ -37,13 +38,7 @@ export class SuiteEditorComponent {
   private readonly activeRun = inject(ActiveRunService);
   private destroyed = false;
 
-  readonly form = this.fb.group({
-    name: this.fb.control(""),
-    description: this.fb.control(""),
-    runs: this.fb.control(10),
-    warmup: this.fb.control(1),
-    cases: this.fb.array([this.caseGroup()]),
-  });
+  readonly form = createSuiteForm(this.fb);
 
   readonly saved = signal<Suite | null>(null);
   readonly runs = signal<RunRecord[]>([]);
@@ -71,19 +66,6 @@ export class SuiteEditorComponent {
     return this.form.controls.cases;
   }
 
-  caseGroup(c?: Partial<SuiteCase>) {
-    return this.fb.group({
-      id: this.fb.control(c?.id ?? ""),
-      name: this.fb.control(c?.name ?? ""),
-      command: this.fb.control(c?.command ?? ""),
-      setupCommand: this.fb.control(c?.setupCommand ?? ""),
-      cleanupCommand: this.fb.control(c?.cleanupCommand ?? ""),
-      workingDirectory: this.fb.control(c?.workingDirectory ?? ""),
-      enabled: this.fb.control(c?.enabled ?? true),
-      budgetPercent: this.fb.control<number | null>(c?.budgetPercent ?? null),
-    });
-  }
-
   private async load(id: string | undefined): Promise<void> {
     const isCurrent = this.latestLoad.begin();
     this.problems.set([]);
@@ -94,8 +76,7 @@ export class SuiteEditorComponent {
     if (!id) {
       this.saved.set(null);
       this.runs.set([]);
-      this.setForm({ name: "", description: "", runs: 10, warmup: 1, cases: [] });
-      this.cases.push(this.caseGroup());
+      fillSuiteForm(this.form, this.fb, { name: "", description: "", runs: 10, warmup: 1, cases: [{}] });
       this.form.markAsPristine();
       return;
     }
@@ -103,7 +84,7 @@ export class SuiteEditorComponent {
       const suite = await this.api.getSuite(id);
       if (!isCurrent()) return;
       this.saved.set(suite);
-      this.setForm(suite);
+      fillSuiteForm(this.form, this.fb, suite);
       this.form.markAsPristine();
       const runs = await this.api.listRuns(id);
       if (isCurrent()) this.runs.set(runs);
@@ -114,37 +95,8 @@ export class SuiteEditorComponent {
     }
   }
 
-  private setForm(s: Pick<Suite, "name" | "description" | "runs" | "warmup" | "cases">): void {
-    this.form.patchValue({ name: s.name, description: s.description, runs: s.runs, warmup: s.warmup });
-    this.cases.clear();
-    s.cases.forEach((c) => this.cases.push(this.caseGroup(c)));
-  }
-
-  private draft(): Suite {
-    const v = this.form.getRawValue();
-    const saved = this.saved();
-    return {
-      id: saved?.id ?? "",
-      name: v.name,
-      description: v.description,
-      runs: Number(v.runs),
-      warmup: Number(v.warmup),
-      baselineRunId: saved?.baselineRunId ?? null,
-      schemaVersion: saved?.schemaVersion ?? 0,
-      createdAt: saved?.createdAt ?? "",
-      updatedAt: saved?.updatedAt ?? "",
-      cases: v.cases.map((c) => ({
-        ...c,
-        setupCommand: c.setupCommand || null,
-        cleanupCommand: c.cleanupCommand || null,
-        workingDirectory: c.workingDirectory || null,
-        budgetPercent: c.budgetPercent ?? null,
-      })),
-    };
-  }
-
   addCase(): void {
-    this.cases.push(this.caseGroup());
+    this.cases.push(createCaseGroup(this.fb));
     this.form.markAsDirty();
     this.tab.set("cases");
   }
@@ -165,7 +117,7 @@ export class SuiteEditorComponent {
 
   async save(): Promise<void> {
     if (this.busy() !== "") return;
-    const draft = this.draft();
+    const draft = formToDraft(this.form.getRawValue(), this.saved());
     const problems = validateSuite(draft);
     this.problems.set(problems);
     if (problems.length) return;
@@ -179,7 +131,7 @@ export class SuiteEditorComponent {
         await this.router.navigate(["/suites", saved.id], { replaceUrl: true });
       } else {
         this.saved.set(saved);
-        this.setForm(saved);
+        fillSuiteForm(this.form, this.fb, saved);
         this.form.markAsPristine();
       }
     } catch (e) {
