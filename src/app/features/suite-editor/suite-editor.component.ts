@@ -10,6 +10,7 @@ import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
 import { IconComponent } from "../../shared/icon.component";
 import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm.component";
+import { confirmItems, confirmSummary } from "./run-confirmation";
 import { createCaseGroup, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
 
 type Tab = "cases" | "history";
@@ -189,24 +190,12 @@ export class SuiteEditorComponent {
     }
   }
 
-  /** Exactly what the backend will execute: the saved, enabled cases. */
   confirmItems(): ConfirmItem[] {
-    return (this.saved()?.cases ?? [])
-      .filter((c) => c.enabled)
-      .map((c) => ({
-        name: c.name,
-        command: c.command,
-        setupCommand: c.setupCommand,
-        cleanupCommand: c.cleanupCommand,
-        workingDirectory: c.workingDirectory,
-      }));
+    return confirmItems(this.saved());
   }
 
   confirmSummary(): string {
-    const s = this.saved();
-    if (!s) return "";
-    const warm = s.warmup > 0 ? `, after ${s.warmup} warm-up run${s.warmup === 1 ? "" : "s"}` : "";
-    return `${this.confirmItems().length} case(s), ${s.runs} timed runs each${warm}`;
+    return confirmSummary(this.saved());
   }
 
   async cancelRun(): Promise<void> {
