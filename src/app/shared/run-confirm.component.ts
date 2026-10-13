@@ -1,4 +1,4 @@
-import { afterNextRender, Component, ElementRef, input, output, viewChild } from "@angular/core";
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, input, output, viewChild } from "@angular/core";
 
 export interface ConfirmItem {
   name?: string;
@@ -26,7 +26,7 @@ export interface ConfirmItem {
       >
         <h2 id="confirm-title">{{ heading() }}</h2>
         <p class="muted lead">These commands will run on this machine through hyperfine.</p>
-        <div class="items">
+        <div class="items" tabindex="0" role="region" aria-label="Commands to run">
           @for (item of items(); track $index) {
             <div class="item">
               @if (item.name) {
@@ -89,12 +89,18 @@ export class RunConfirmComponent {
   private readonly primary = viewChild.required<ElementRef<HTMLButtonElement>>("primary");
 
   constructor() {
+    // Whatever opened the dialog gets focus back when it closes. Opened by a shortcut with
+    // nothing focused, there is nothing to restore.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    inject(DestroyRef).onDestroy(() => opener?.focus());
     afterNextRender(() => this.primary().nativeElement.focus());
   }
 
   /** Keeps Tab inside the dialog while it is open. */
   protected trap(event: Event, backwards: boolean): void {
-    const focusable = Array.from(this.dialog().nativeElement.querySelectorAll<HTMLElement>("button, [href], input"));
+    const focusable = Array.from(this.dialog().nativeElement.querySelectorAll<HTMLElement>(
+        "button, [href], input, [tabindex]:not([tabindex='-1'])",
+      ));
     if (!focusable.length) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
