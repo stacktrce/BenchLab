@@ -4,7 +4,7 @@
       <div class="crumbs">
         <a [routerLink]="['/suites', d.record.suiteId]">{{ d.record.suiteName }}</a>
         <span class="faint">/</span>
-        <strong>{{ d.record.startedAt | date: "MMM d, y, HH:mm" }}</strong>
+        <h1>{{ d.record.startedAt | date: "MMM d, y, HH:mm" }}</h1>
       </div>
       <div class="row-actions">
         <button type="button" class="bare" (click)="copyMarkdown()" title="Copy as Markdown">
@@ -41,10 +41,10 @@
       </section>
     }
   } @else if (error(); as err) {
-    <div class="page-bar"><div class="crumbs"><strong>Run</strong></div></div>
+    <div class="page-bar"><div class="crumbs"><h1>Run</h1></div></div>
     <div class="note error" role="alert">{{ err }}</div>
   } @else {
-    <div class="page-bar"><div class="crumbs"><strong>Run</strong></div></div>
+    <div class="page-bar"><div class="crumbs"><h1>Run</h1></div></div>
     <p class="muted">Loading…</p>
   }
 </div>

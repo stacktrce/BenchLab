@@ -127,7 +127,7 @@
 
 .toast.error {
   background: var(--bad);
-  color: #fff;
+  color: var(--danger-ink);
 }
 
 .toast button {

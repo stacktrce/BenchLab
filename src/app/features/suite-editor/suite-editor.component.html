@@ -1,13 +1,13 @@
 <div class="page">
   @if (loadError(); as err) {
-    <div class="page-bar"><div class="crumbs"><strong>Suite</strong></div></div>
+    <div class="page-bar"><div class="crumbs"><h1>Suite</h1></div></div>
     <div class="note error" role="alert">{{ err }}</div>
   } @else {
     <div class="page-bar">
       <div class="crumbs">
         <span>Suites</span>
         <span class="faint">/</span>
-        <strong>{{ saved()?.name || "New suite" }}</strong>
+        <h1>{{ saved()?.name || "New suite" }}</h1>
       </div>
       <div class="row-actions">
         @if (saved()) {
@@ -118,7 +118,7 @@
         } @else {
           <table>
             <thead>
-              <tr><th>Started</th><th>Status</th><th class="r">Cases</th><th>Tool</th><th></th></tr>
+              <tr><th>Started</th><th>Status</th><th class="r">Cases</th><th>Tool</th><th><span class="sr-only">Actions</span></th></tr>
             </thead>
             <tbody>
               @for (r of runs(); track r.id) {
