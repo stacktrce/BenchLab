@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Rules for any AI agent (or human) changing BenchLab. Read this before editing code. The product plan, status and design rules are in [.agents/benchlab-plan.md](.agents/benchlab-plan.md); the Angular skill is in [.agents/angular-developer/SKILL.md](.agents/angular-developer/SKILL.md).
+Rules for any AI agent (or human) changing BenchLab. Read this before editing code. The maintainer keeps the product plan and status in a personal, untracked `.agents/` folder (ignored by `.gitignore` on purpose). If it exists on your machine, read `.agents/benchlab-plan.md` too; if not, everything you need to change code safely is in this file and the README.
 
 The standard to hold yourself to: **a change should leave the codebase healthier than you found it.** Not perfect, better. Do not land a change that makes the code harder to understand, test or change, even under time pressure.
 
@@ -121,7 +121,7 @@ For UI changes, look at it. Start `npm start`, load the page in headless Edge or
 4. **Exports carry their own caveats and are safe to open**: CSV formula neutralisation stays; the file writer keeps its extension allowlist and absolute-path check.
 5. **One benchmark at a time.** Cancel must kill the whole process tree.
 6. **User data survives upgrades.** Migrations are append-only and tested from the previous version; a database from a newer build is refused, not damaged.
-7. **Design:** follow the design rules in the plan (paper and graphite themes, one accent, no card boxes, no pill badges, no emoji or unicode glyph icons, mono numerals, distribution strips). If a screen looks like a generic dashboard template, redo it.
+7. **Design:** the UI is meant to look like a calm lab notebook, not a generic dashboard template. Paper (light) and graphite (dark) themes via the CSS variables in `src/styles.css`; one accent (burnt orange) reserved for Run and focus; IBM Plex Sans and Mono with tabular numerals for data; hairline rules instead of card boxes; notes marked with a left rule; status as a dot and a word; small inline SVG icons (`IconComponent`). No pill badges, gradients, emoji or unicode glyphs used as icons. Results use distribution strips plus numbers. Commands are always monospace and shown in full. If a screen starts to look like a template, redo it.
 
 ## 8. Definition of done
 
