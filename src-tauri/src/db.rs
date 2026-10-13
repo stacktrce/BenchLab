@@ -51,6 +51,8 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE runs ADD COLUMN git_json TEXT;",
     // v5: the run a suite compares against by default. SET NULL keeps the suite valid if the run goes.
     "ALTER TABLE suites ADD COLUMN baseline_run_id TEXT REFERENCES runs(id) ON DELETE SET NULL;",
+    // v6: optional per-case regression budget, in percent slower than the baseline.
+    "ALTER TABLE cases ADD COLUMN budget_percent REAL CHECK (budget_percent IS NULL OR budget_percent > 0);",
 ];
 
 pub struct Db(Mutex<Connection>);

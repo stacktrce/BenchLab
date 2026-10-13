@@ -2,7 +2,7 @@ import { DatePipe } from "@angular/common";
 import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { chooseBaseline } from "../../core/baseline";
-import { ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
+import { applyBudgets, ComparisonRow, compareRuns, configDifferences, gitNotes, summarize } from "../../core/compare";
 import { comparisonToCsv, comparisonToMarkdown } from "../../core/export";
 import { exportFileName, FileExportService } from "../../core/file-export.service";
 import { PAGE_SIZE } from "../../core/paging";
@@ -125,7 +125,7 @@ export class CompareComponent {
       this.baselineRun.set(baseline);
       const b = this.parse(baseline, "Baseline");
       const c = this.parse(candidate, "Candidate");
-      if (b && c) this.rows.set(compareRuns(b, c));
+      if (b && c) this.rows.set(applyBudgets(compareRuns(b, c), candidate.config));
     } catch (e) {
       this.message.set(String(e));
     } finally {

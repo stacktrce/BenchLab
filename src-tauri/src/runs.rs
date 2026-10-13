@@ -318,6 +318,7 @@ mod tests {
                     cleanup_command: None,
                     working_directory: None,
                     enabled: true,
+                    budget_percent: None,
                 }],
             },
         )
@@ -391,6 +392,7 @@ mod tests {
             cleanup_command: None,
             working_directory: None,
             enabled: true,
+            budget_percent: None,
         };
         let mut disabled = case("skipped", "exit 1");
         disabled.enabled = false;
@@ -478,6 +480,7 @@ mod tests {
             cleanup_command: None,
             working_directory: None,
             enabled: true,
+            budget_percent: None,
         };
         let suite = Suite {
             id: String::new(),
@@ -567,6 +570,7 @@ mod tests {
             cleanup_command: None,
             working_directory: dir.map(Into::into),
             enabled: true,
+            budget_percent: None,
         };
         let repo_dir = repo.to_str().unwrap();
         let suite = Suite {

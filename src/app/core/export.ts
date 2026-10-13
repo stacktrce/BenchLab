@@ -3,6 +3,12 @@ import { describeGit, ms, percent, signedMs } from "./format";
 import { GitInfo, RunRecord, Suite } from "./models";
 import { BenchmarkResult } from "./parser/hyperfine.types";
 
+const BUDGET_TEXT = {
+  breach: "over budget",
+  within: "within budget",
+  unclear: "cannot tell from this data",
+} as const;
+
 const VERDICT_TEXT = { faster: "faster", slower: "slower", inconclusive: "within noise" } as const;
 
 /** Inline code span that survives backticks and pipes inside table cells. */
@@ -167,6 +173,26 @@ export function comparisonToMarkdown(
     out.push("## Configuration differs between the runs", "", ...configChanges.map((c) => `- ${c}`), "");
   }
 
+  const budgeted = rows.filter((r) => r.budget);
+  if (budgeted.length) {
+    out.push(
+      "## Regression budgets",
+      "",
+      table(
+        ["Case", "Budget", "Change", "95% interval", "Status"],
+        budgeted.map((r) => [
+          cell(r.name),
+          `${r.budget!.percent}%`,
+          percent(r.deltaPercent),
+          r.deltaPercentInterval ? interval(r.deltaPercentInterval.low, r.deltaPercentInterval.high, (n) => percent(n)) : "—",
+          BUDGET_TEXT[r.budget!.status],
+        ]),
+        1,
+      ),
+      "",
+    );
+  }
+
   const caveats = rows.filter((r) => r.caveats.length);
   if (caveats.length) {
     out.push("## Caveats", "");
@@ -185,7 +211,7 @@ export function comparisonToMarkdown(
 export function comparisonToCsv(rows: ComparisonRow[]): string {
   const header = [
     "case", "kind", "baseline_mean_s", "candidate_mean_s", "delta_s", "delta_pct",
-    "delta_pct_low", "delta_pct_high", "verdict", "caveats",
+    "delta_pct_low", "delta_pct_high", "verdict", "caveats", "budget_pct", "budget_status",
   ];
   const body = rows.map((r) => [
     csvText(r.name),
@@ -198,6 +224,8 @@ export function comparisonToCsv(rows: ComparisonRow[]): string {
     csvNum(r.deltaPercentInterval?.high),
     r.verdict ?? "",
     csvText(r.caveats.join("; ")),
+    csvNum(r.budget?.percent),
+    r.budget?.status ?? "",
   ]);
   return [header, ...body].map((r) => r.join(",")).join("\r\n") + "\r\n";
 }

@@ -133,7 +133,7 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
     ) {
         return Ok(id);
     }
-    let case = |name: &str, command: &str| Case {
+    let case = |name: &str, command: &str, budget_percent: Option<f64>| Case {
         id: String::new(),
         name: name.into(),
         command: command.into(),
@@ -141,6 +141,7 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
         cleanup_command: None,
         working_directory: None,
         enabled: true,
+        budget_percent,
     };
     let suite = save_suite(
         conn,
@@ -156,10 +157,10 @@ pub fn load_demo(conn: &Connection) -> Result<String, String> {
             created_at: String::new(),
             updated_at: String::new(),
             cases: vec![
-                case("concat with +=", "node bench/concat.js"),
-                case("array join", "node bench/join.js"),
-                case("template literal", "node bench/template.js"),
-                case("regex split", "node bench/split.js"),
+                case("concat with +=", "node bench/concat.js", Some(5.0)),
+                case("array join", "node bench/join.js", None),
+                case("template literal", "node bench/template.js", Some(10.0)),
+                case("regex split", "node bench/split.js", Some(20.0)),
             ],
         },
     )?;

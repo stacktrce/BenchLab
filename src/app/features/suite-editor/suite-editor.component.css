@@ -150,3 +150,7 @@ summary:hover {
 .pin {
   margin-left: 6px;
 }
+
+.budget {
+  width: 90px;
+}

@@ -7,7 +7,7 @@ import { Suite } from "./models";
 export function validateSuite(
   suite: Pick<Suite, "name" | "runs"> & {
     warmup?: number;
-    cases: { name: string; command: string }[];
+    cases: { name: string; command: string; budgetPercent?: number | null }[];
   },
 ): string[] {
   const problems: string[] = [];
@@ -28,6 +28,9 @@ export function validateSuite(
     else if (seen.has(name)) problems.push(`${label}: name is used more than once.`);
     else seen.add(name);
     if (!c.command.trim()) problems.push(`${label}: command is required.`);
+    if (c.budgetPercent != null && !(Number.isFinite(c.budgetPercent) && c.budgetPercent > 0)) {
+      problems.push(`${label}: budget must be a number above 0.`);
+    }
   });
   return problems;
 }

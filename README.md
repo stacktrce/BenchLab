@@ -51,6 +51,7 @@ Change is candidate minus baseline, so negative is faster.
 - Strips show min to max, mean plus or minus one standard deviation, the mean and the median, on one shared axis starting at zero.
 - Per-case notes flag: fewer than 5 timed runs, no standard deviation, non-zero exit codes, and a first run at least 1.5 times the median (a likely cold cache; use warm-up runs).
 - If a case runs inside a git repository (its working directory is set), the run records the branch, commit and whether there were uncommitted changes when it started. A comparison says when both runs used the same commit (so any difference is noise or the environment) and warns when either ran with uncommitted changes, since the commit then does not fully describe the code.
+- A case can have a **regression budget** (percent slower than the baseline, set under the case's advanced options). It is reported as over budget only when the whole 95% interval of the change is above the budget, as within budget only when the whole interval is at or below it, and otherwise as "data cannot tell". A noisy case with a large point estimate is therefore not called a breach, and a quiet case is not waved through on its mean alone.
 - Above the table, BenchLab lists configuration differences between the two runs: timed runs, warm-up, a changed command, setup, cleanup or directory, and a different hyperfine version.
 
 ![A single run](docs/screenshots/light-run.png)
