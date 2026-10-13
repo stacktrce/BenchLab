@@ -1,6 +1,7 @@
 mod db;
 mod demo;
 mod files;
+mod git;
 mod hyperfine;
 mod runs;
 mod suites;

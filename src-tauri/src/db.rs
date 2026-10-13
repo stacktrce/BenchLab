@@ -46,6 +46,9 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE suites ADD COLUMN warmup INTEGER NOT NULL DEFAULT 0 CHECK (warmup >= 0);",
     // v3: suite configuration as it was when the run happened. NULL for runs recorded earlier.
     "ALTER TABLE runs ADD COLUMN config_json TEXT;",
+    // v4: git state of the case working directories when the run started, as JSON.
+    // NULL for runs recorded earlier.
+    "ALTER TABLE runs ADD COLUMN git_json TEXT;",
 ];
 
 pub struct Db(Mutex<Connection>);
