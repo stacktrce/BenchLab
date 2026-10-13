@@ -9,7 +9,8 @@
     "tauri": "node scripts/fetch-hyperfine.mjs && tauri",
     "test": "vitest run",
     "lint": "ng lint",
-    "fetch:hyperfine": "node scripts/fetch-hyperfine.mjs"
+    "fetch:hyperfine": "node scripts/fetch-hyperfine.mjs",
+    "audit:ui": "node scripts/ui-audit/audit.mjs"
   },
   "private": true,
   "dependencies": {
@@ -36,9 +37,11 @@
     "@tauri-apps/cli": "^2",
     "@types/node": "^26.6.5",
     "angular-eslint": "22.6.0",
+    "axe-core": "^4.14.0",
     "eslint": "^10.12.0",
     "eslint-plugin-prettier": "^5.5.7",
     "prettier": "^3.9.10",
+    "puppeteer-core": "^25.13.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.71.0",
     "vitest": "^5.0.4"
