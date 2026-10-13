@@ -34,7 +34,7 @@ The sidebar footer shows which one is in use and its version. Every run records 
 
 1. **New suite.** Name it, add cases (a name and a command each), and choose timed runs and warm-up runs. Setup and cleanup commands and a working directory are under each case.
 2. **Run.** BenchLab first shows every command, setup, cleanup and directory, and runs nothing until you confirm. You can cancel a running suite; cases already finished are kept.
-3. **Compare.** Open a run and choose Compare. The baseline defaults to the previous run. Pick any two runs of the suite.
+3. **Compare.** Open a run and choose Compare. The baseline defaults to the suite's pinned run (pin one from a run's page with Pin as baseline), or to the previous run that has results if none is pinned. Pick any two runs of the suite.
 4. **Export.** Markdown or CSV from a run or a comparison.
 
 **Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing.
