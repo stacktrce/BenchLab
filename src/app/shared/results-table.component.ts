@@ -57,9 +57,6 @@ import { RangeStripComponent } from "./range-strip.component";
     td:first-child {
       word-break: break-word;
     }
-    .strong {
-      font-weight: 500;
-    }
     .flag {
       font-size: 12px;
       color: var(--warn);
@@ -67,9 +64,6 @@ import { RangeStripComponent } from "./range-strip.component";
     .legend {
       margin-top: 8px;
       font-size: 12px;
-    }
-    .more {
-      margin-top: 10px;
     }
   `,
 })

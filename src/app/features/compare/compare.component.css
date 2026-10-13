@@ -50,10 +50,6 @@
   color: var(--ink-2);
 }
 
-.strong {
-  font-weight: 500;
-}
-
 .strip-col {
   width: 34%;
   min-width: 170px;
@@ -83,10 +79,6 @@ td {
 
 .filter {
   margin: 4px 0 10px;
-}
-
-.more {
-  margin-top: 10px;
 }
 
 .basis {

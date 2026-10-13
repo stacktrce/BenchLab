@@ -467,3 +467,11 @@ svg.icon {
   white-space: nowrap;
   border: 0;
 }
+
+.strong {
+  font-weight: 500;
+}
+
+.more {
+  margin-top: 10px;
+}
