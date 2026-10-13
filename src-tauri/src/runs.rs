@@ -296,33 +296,10 @@ mod tests {
     use super::*;
     use crate::db::memory;
     use crate::suites::{Case, save_suite};
+    use crate::testing::{case, git_available, real_hyperfine, suite};
 
     fn saved_suite(conn: &Connection) -> Suite {
-        save_suite(
-            conn,
-            Suite {
-                id: String::new(),
-                name: "S".into(),
-                description: String::new(),
-                runs: 3,
-                warmup: 0,
-                baseline_run_id: None,
-                schema_version: 0,
-                created_at: String::new(),
-                updated_at: String::new(),
-                cases: vec![Case {
-                    id: String::new(),
-                    name: "a".into(),
-                    command: "echo".into(),
-                    setup_command: None,
-                    cleanup_command: None,
-                    working_directory: None,
-                    enabled: true,
-                    budget_percent: None,
-                }],
-            },
-        )
-        .unwrap()
+        save_suite(conn, suite("S", vec![case("a")])).unwrap()
     }
 
     fn outcome(results: usize, errors: usize) -> SuiteOutcome {
@@ -378,43 +355,31 @@ mod tests {
         assert!(list_runs(&conn, Some("nope"), 10).unwrap().is_empty());
     }
 
-    /// Needs a real hyperfine; skipped when it is not installed.
     #[test]
     fn executes_real_hyperfine_per_case_and_isolates_failures() {
-        let Ok(hf) = hyperfine::locate_hyperfine() else {
+        let Some(hf) = real_hyperfine() else {
             return;
         };
-        let case = |name: &str, command: &str| Case {
-            id: String::new(),
-            name: name.into(),
+        let named = |name: &str, command: &str| Case {
             command: command.into(),
-            setup_command: None,
-            cleanup_command: None,
-            working_directory: None,
-            enabled: true,
-            budget_percent: None,
+            ..case(name)
         };
-        let mut disabled = case("skipped", "exit 1");
-        disabled.enabled = false;
-        let mut with_hooks = case("hooks", "echo hi");
-        with_hooks.setup_command = Some("echo setup".into());
-        with_hooks.cleanup_command = Some("echo cleanup".into());
+        let disabled = Case {
+            enabled: false,
+            ..named("skipped", "exit 1")
+        };
+        let with_hooks = Case {
+            setup_command: Some("echo setup".into()),
+            cleanup_command: Some("echo cleanup".into()),
+            ..case("hooks")
+        };
         let suite = Suite {
-            id: String::new(),
-            name: "S".into(),
-            description: String::new(),
             runs: 2,
             warmup: 1,
-            baseline_run_id: None,
-            schema_version: 1,
-            created_at: String::new(),
-            updated_at: String::new(),
-            cases: vec![
-                case("good", "echo hi"),
-                case("bad", "exit 3"),
-                disabled,
-                with_hooks,
-            ],
+            ..suite(
+                "S",
+                vec![case("good"), named("bad", "exit 3"), disabled, with_hooks],
+            )
         };
         let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
         assert_eq!(out.case_count, 3);
@@ -449,7 +414,7 @@ mod tests {
         let config = get_run(&conn, &run.record.id).unwrap().config.unwrap();
         assert_eq!(
             (config.warmup, config.runs, config.cases[0].command.as_str()),
-            (0, 3, "echo")
+            (0, 3, "echo hi")
         );
 
         conn.execute(
@@ -460,10 +425,10 @@ mod tests {
         assert!(get_run(&conn, &run.record.id).unwrap().config.is_none());
     }
 
-    /// Needs a real hyperfine. Cancelling must return quickly and leave nothing behind.
+    /// Cancelling must return quickly and leave nothing behind.
     #[test]
     fn cancelling_stops_the_whole_process_tree_quickly() {
-        let Ok(hf) = hyperfine::locate_hyperfine() else {
+        let Some(hf) = real_hyperfine() else {
             return;
         };
         let long = if cfg!(windows) {
@@ -472,28 +437,11 @@ mod tests {
             "sleep 41"
         };
         let marker = if cfg!(windows) { "-n 41" } else { "sleep 41" };
-        let case = |name: &str, command: &str| Case {
-            id: String::new(),
-            name: name.into(),
+        let named = |name: &str, command: &str| Case {
             command: command.into(),
-            setup_command: None,
-            cleanup_command: None,
-            working_directory: None,
-            enabled: true,
-            budget_percent: None,
+            ..case(name)
         };
-        let suite = Suite {
-            id: String::new(),
-            name: "S".into(),
-            description: String::new(),
-            runs: 3,
-            warmup: 0,
-            baseline_run_id: None,
-            schema_version: 1,
-            created_at: String::new(),
-            updated_at: String::new(),
-            cases: vec![case("long", long), case("never reached", "echo hi")],
-        };
+        let suite = suite("S", vec![named("long", long), case("never reached")]);
         let cancel = std::sync::Arc::new(AtomicBool::new(false));
         let flag = cancel.clone();
         let canceller = std::thread::spawn(move || {
@@ -530,13 +478,16 @@ mod tests {
         );
     }
 
-    /// Needs real hyperfine and git. The state is captured when the run starts, so a change made
-    /// to the repository after that must not show up in the record.
+    /// The state is captured when the run starts, so a change made to the repository after that
+    /// must not show up in the record.
     #[test]
     fn a_suite_run_records_the_git_state_of_its_working_directories() {
-        let Ok(hf) = hyperfine::locate_hyperfine() else {
+        let Some(hf) = real_hyperfine() else {
             return;
         };
+        if !git_available() {
+            return;
+        }
         let git = |dir: &std::path::Path, args: &[&str]| {
             std::process::Command::new("git")
                 .args([
@@ -554,41 +505,28 @@ mod tests {
         let repo = std::env::temp_dir().join(format!("benchlab-run-git-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&repo);
         std::fs::create_dir_all(&repo).unwrap();
-        if git(&repo, &["init", "-q", "-b", "main"]).is_err() {
-            return; // git is not installed
-        }
+        git(&repo, &["init", "-q", "-b", "main"]).unwrap();
         std::fs::write(repo.join("f.txt"), "1").unwrap();
         git(&repo, &["add", "f.txt"]).unwrap();
         git(&repo, &["commit", "-q", "-m", "c"]).unwrap();
         let head = String::from_utf8(git(&repo, &["rev-parse", "HEAD"]).unwrap().stdout).unwrap();
 
-        let case = |name: &str, dir: Option<&str>| Case {
-            id: String::new(),
-            name: name.into(),
-            command: "echo hi".into(),
-            setup_command: None,
-            cleanup_command: None,
+        let in_dir = |name: &str, dir: Option<&str>| Case {
             working_directory: dir.map(Into::into),
-            enabled: true,
-            budget_percent: None,
+            ..case(name)
         };
         let repo_dir = repo.to_str().unwrap();
+        // two cases in one repo and one with no directory: one record, not three
         let suite = Suite {
-            id: String::new(),
-            name: "S".into(),
-            description: String::new(),
             runs: 2,
-            warmup: 0,
-            baseline_run_id: None,
-            schema_version: 1,
-            created_at: String::new(),
-            updated_at: String::new(),
-            // two cases in one repo and one with no directory: one record, not three
-            cases: vec![
-                case("a", Some(repo_dir)),
-                case("b", Some(repo_dir)),
-                case("c", None),
-            ],
+            ..suite(
+                "S",
+                vec![
+                    in_dir("a", Some(repo_dir)),
+                    in_dir("b", Some(repo_dir)),
+                    in_dir("c", None),
+                ],
+            )
         };
         let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
         assert_eq!(out.status(), "completed");
@@ -598,39 +536,23 @@ mod tests {
         let _ = std::fs::remove_dir_all(repo);
     }
 
-    /// Needs real hyperfine. Values that look like options must be passed as values: a case named
-    /// "-fast" made hyperfine reject the whole command line.
+    /// Values that look like options must be passed as values: a case named "-fast" made
+    /// hyperfine reject the whole command line.
     #[test]
     fn option_like_names_and_hooks_are_passed_as_values() {
-        let Ok(hf) = hyperfine::locate_hyperfine() else {
+        let Some(hf) = real_hyperfine() else {
             return;
         };
-        let case = |name: &str, setup: Option<&str>| Case {
-            id: String::new(),
-            name: name.into(),
-            command: "echo hi".into(),
-            setup_command: setup.map(Into::into),
-            cleanup_command: None,
-            working_directory: None,
-            enabled: true,
-            budget_percent: None,
+        let hooked = Case {
+            setup_command: Some("--version".into()),
+            ..case("hooked")
         };
         let suite = Suite {
-            id: String::new(),
-            name: "S".into(),
-            description: String::new(),
             runs: 2,
-            warmup: 0,
-            baseline_run_id: None,
-            schema_version: 1,
-            created_at: String::new(),
-            updated_at: String::new(),
-            cases: vec![
-                case("-fast", None),
-                case("--runs=99", None),
-                case("a=b c", None),
-                case("hooked", Some("--version")),
-            ],
+            ..suite(
+                "S",
+                vec![case("-fast"), case("--runs=99"), case("a=b c"), hooked],
+            )
         };
         let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
         let names: Vec<_> = out

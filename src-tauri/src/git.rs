@@ -77,11 +77,8 @@ pub fn capture_all<'a>(dirs: impl IntoIterator<Item = &'a str>) -> Vec<GitInfo> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testing::git_available;
     use std::path::PathBuf;
-
-    fn git_available() -> bool {
-        Command::new("git").arg("--version").output().is_ok()
-    }
 
     fn run(dir: &Path, args: &[&str]) {
         let status = Command::new("git")

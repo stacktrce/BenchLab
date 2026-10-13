@@ -367,32 +367,14 @@ pub fn delete_suite_cmd(db: State<'_, Db>, id: String) -> Result<(), String> {
 mod tests {
     use super::*;
     use crate::db::memory;
+    use crate::testing::suite;
 
+    /// Carries a whitespace-only setup command to check that blank hooks are stored as none.
     fn case(name: &str, command: &str) -> Case {
         Case {
-            id: String::new(),
-            name: name.into(),
             command: command.into(),
             setup_command: Some("  ".into()),
-            cleanup_command: None,
-            working_directory: None,
-            enabled: true,
-            budget_percent: None,
-        }
-    }
-
-    fn suite(name: &str, cases: Vec<Case>) -> Suite {
-        Suite {
-            id: String::new(),
-            name: name.into(),
-            description: String::new(),
-            runs: 10,
-            warmup: 1,
-            baseline_run_id: None,
-            schema_version: 0,
-            created_at: String::new(),
-            updated_at: String::new(),
-            cases,
+            ..crate::testing::case(name)
         }
     }
 
@@ -510,37 +492,10 @@ mod migration_tests {
 mod baseline_tests {
     use super::*;
     use crate::db::memory;
-
-    fn case() -> Case {
-        Case {
-            id: String::new(),
-            name: "a".into(),
-            command: "echo".into(),
-            setup_command: None,
-            cleanup_command: None,
-            working_directory: None,
-            enabled: true,
-            budget_percent: None,
-        }
-    }
+    use crate::testing::{case, suite};
 
     fn make_suite(conn: &Connection, name: &str) -> Suite {
-        save_suite(
-            conn,
-            Suite {
-                id: String::new(),
-                name: name.into(),
-                description: String::new(),
-                runs: 3,
-                warmup: 0,
-                baseline_run_id: None,
-                schema_version: 0,
-                created_at: String::new(),
-                updated_at: String::new(),
-                cases: vec![case()],
-            },
-        )
-        .unwrap()
+        save_suite(conn, suite(name, vec![case("a")])).unwrap()
     }
 
     fn add_run(conn: &Connection, id: &str, suite: &Suite, raw_output: Option<&str>) {
@@ -654,29 +609,16 @@ mod baseline_tests {
 mod budget_tests {
     use super::*;
     use crate::db::memory;
+    use crate::testing::{case, suite};
 
     fn suite_with_budget(budget: Option<f64>) -> Suite {
-        Suite {
-            id: String::new(),
-            name: "S".into(),
-            description: String::new(),
-            runs: 3,
-            warmup: 0,
-            baseline_run_id: None,
-            schema_version: 0,
-            created_at: String::new(),
-            updated_at: String::new(),
-            cases: vec![Case {
-                id: String::new(),
-                name: "a".into(),
-                command: "echo".into(),
-                setup_command: None,
-                cleanup_command: None,
-                working_directory: None,
-                enabled: true,
+        suite(
+            "S",
+            vec![Case {
                 budget_percent: budget,
+                ..case("a")
             }],
-        }
+        )
     }
 
     #[test]

@@ -5,6 +5,8 @@ mod git;
 mod hyperfine;
 mod runs;
 mod suites;
+#[cfg(test)]
+mod testing;
 
 use tauri::Manager;
 
