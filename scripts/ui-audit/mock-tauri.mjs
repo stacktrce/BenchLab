@@ -65,7 +65,16 @@ export function tauriMock({ empty, slow = false }) {
   };
 
   const second = { ...suite, id: "s2", name: "Second suite", cases: [suite.cases[0]] };
-  const later = (value, ms) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
+  // Every call is recorded so the audit can wait for what it depends on. `later` answers late and
+  // records when the answer is delivered, as "delivered:<label>".
+  const calls = (window.__calls = []);
+  const later = (value, ms, label) =>
+    new Promise((resolve) =>
+      setTimeout(() => {
+        calls.push({ command: `delivered:${label}` });
+        resolve(value);
+      }, ms),
+    );
 
   // A suite run that stays "in progress" until cancelled (or 8 s), like a long benchmark.
   let finishRun = null;
@@ -73,6 +82,7 @@ export function tauriMock({ empty, slow = false }) {
   window.__TAURI_INTERNALS__ = {
     transformCallback: () => 1,
     invoke: async (command, args) => {
+      calls.push({ command, args });
       switch (command) {
         case "find_hyperfine":
           return { path: "C:\\Program Files\\BenchLab\\hyperfine.exe", source: "bundled", version: "hyperfine 1.20.0" };
@@ -82,7 +92,7 @@ export function tauriMock({ empty, slow = false }) {
           return empty ? [] : [runs.r2.record, runs.r1.record];
         case "get_suite":
           if (args.id === "s2") return second;
-          return slow ? later(suite, 800) : suite;
+          return slow ? later(suite, 800, "get_suite:s1") : suite;
         case "run_suite":
           return new Promise((resolve) => {
             finishRun = () => resolve(runs.r2);
@@ -92,7 +102,7 @@ export function tauriMock({ empty, slow = false }) {
           finishRun?.();
           return true;
         case "get_run":
-          return slow && args.id === "r1" ? later(runs.r1, 800) : runs[args.id];
+          return slow && args.id === "r1" ? later(runs.r1, 800, "get_run:r1") : runs[args.id];
         default:
           throw `mock: ${command}`;
       }
