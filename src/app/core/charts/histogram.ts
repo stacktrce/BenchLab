@@ -1,3 +1,5 @@
+import { quantile, sortedCopy } from "./numbers";
+
 export interface Histogram {
   /** One more than `counts`. A histogram of identical values is [v, v] with a single count. */
   edges: number[];
@@ -5,13 +7,6 @@ export interface Histogram {
 }
 
 const MIN_BINS = 5;
-
-function quantile(sorted: number[], q: number): number {
-  const position = (sorted.length - 1) * q;
-  const low = Math.floor(position);
-  const high = Math.ceil(position);
-  return sorted[low] + (sorted[high] - sorted[low]) * (position - low);
-}
 
 /**
  * Freedman-Diaconis bin width (2 * IQR * n^(-1/3)), with Sturges' rule when the IQR is zero,
@@ -50,8 +45,6 @@ function bucket(edges: number[], values: number[]): number[] {
   for (const v of values) counts[Math.min(bins - 1, Math.floor((v - min) / width))]++;
   return counts;
 }
-
-const sortedCopy = (values: number[]) => [...values].sort((a, b) => a - b);
 
 export function histogram(values: number[], maxBins = 30): Histogram {
   if (values.length === 0) return { edges: [], counts: [] };
