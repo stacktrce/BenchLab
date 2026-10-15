@@ -14,6 +14,8 @@ const record = (over: Partial<RunRecord> = {}): RunRecord => ({
   toolVersion: "hyperfine 1.20.0",
   caseCount: 1,
   error: null,
+  note: null,
+  tags: [],
   ...over,
 });
 

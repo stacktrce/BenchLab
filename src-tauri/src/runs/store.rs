@@ -4,7 +4,7 @@ use crate::db::{now_iso, sql_err};
 use crate::suites::Suite;
 use rusqlite::{Connection, OptionalExtension, params};
 
-fn row_to_record(r: &rusqlite::Row) -> rusqlite::Result<RunRecord> {
+pub(super) fn row_to_record(r: &rusqlite::Row) -> rusqlite::Result<RunRecord> {
     Ok(RunRecord {
         id: r.get(0)?,
         suite_id: r.get(1)?,
@@ -15,11 +15,13 @@ fn row_to_record(r: &rusqlite::Row) -> rusqlite::Result<RunRecord> {
         tool_version: r.get(6)?,
         case_count: r.get(7)?,
         error: r.get(8)?,
+        note: r.get(9)?,
+        // Written only by set_run_meta as a JSON array; anything else reads as no tags.
+        tags: serde_json::from_str(&r.get::<_, String>(10)?).unwrap_or_default(),
     })
 }
 
-const RECORD_COLUMNS: &str =
-    "id, suite_id, suite_name, started_at, finished_at, status, tool_version, case_count, error";
+pub(super) const RECORD_COLUMNS: &str = "id, suite_id, suite_name, started_at, finished_at, status,      tool_version, case_count, error, note, tags";
 
 pub(super) fn insert_run(
     conn: &Connection,

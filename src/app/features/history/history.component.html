@@ -1,0 +1,146 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs"><h1>History</h1></div>
+    @if (selected().size) {
+      <div class="row-actions" role="status">
+        <span class="faint">{{ selected().size }} selected</span>
+        <button type="button" class="bare" (click)="compare()" [disabled]="!comparePair()"
+                [title]="comparePair() ? '' : 'Select two runs of the same suite that have results'">
+          <app-icon name="swap" /> Compare
+        </button>
+        @if (confirmingDelete()) {
+          <button type="button" class="danger" (click)="deleteSelected()">
+            Delete {{ selected().size }} run{{ selected().size === 1 ? "" : "s" }} for good
+          </button>
+          <button type="button" class="quiet" (click)="confirmingDelete.set(false)">Keep</button>
+        } @else {
+          <button type="button" class="bare" (click)="confirmingDelete.set(true)"><app-icon name="trash" /> Delete</button>
+        }
+      </div>
+    }
+  </div>
+
+  <form class="filters" role="search" (submit)="$event.preventDefault()">
+    <label class="grow">
+      <span>Search</span>
+      <input #text type="search" placeholder="Suite, branch, commit, note or tag" [value]="filter().text"
+             (input)="search(text.value)" />
+    </label>
+    <label>
+      <span>Suite</span>
+      <select #suite (change)="update({ suiteId: suite.value })">
+        <option value="" [selected]="!filter().suiteId">All suites</option>
+        @for (s of api.suites(); track s.id) {
+          <option [value]="s.id" [selected]="s.id === filter().suiteId">{{ s.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Status</span>
+      <select #status (change)="setStatus(status.value)">
+        <option value="" [selected]="!filter().status">Any</option>
+        @for (s of statuses; track s) {
+          <option [value]="s" [selected]="s === filter().status">{{ s }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>From</span>
+      <input #from type="date" [value]="filter().from" (change)="update({ from: from.value })" />
+    </label>
+    <label>
+      <span>To</span>
+      <input #to type="date" [value]="filter().to" (change)="update({ to: to.value })" />
+    </label>
+    <label>
+      <span>Tag</span>
+      <input #tag class="narrow" [value]="filter().tag" (change)="update({ tag: tag.value })" />
+    </label>
+  </form>
+
+  @if (error(); as message) {
+    <div class="note error" role="alert">{{ message }}</div>
+  } @else if (rows(); as list) {
+    @if (list.length === 0) {
+      @if (isFiltered()) {
+        <div class="empty"><strong>No runs match</strong>Change or clear the filters above.</div>
+      } @else {
+        <div class="empty"><strong>No runs yet</strong>Every suite run is recorded here, across all suites.</div>
+      }
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th><span class="sr-only">Select</span></th>
+            <th>Started</th>
+            <th>Suite</th>
+            <th>Status</th>
+            <th>Code</th>
+            <th class="r">Cases</th>
+            <th>Note and tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of list; track r.id) {
+            <tr [class.picked]="selected().has(r.id)">
+              <td>
+                <input type="checkbox" [checked]="selected().has(r.id)" (change)="toggle(r.id)"
+                       [attr.aria-label]="'Select the run of ' + r.suiteName + ' at ' + (r.startedAt | date: 'MMM d, HH:mm')" />
+              </td>
+              <td class="started"><a [routerLink]="['/runs', r.id]">{{ r.startedAt | date: "MMM d, y, HH:mm" }}</a></td>
+              <td>{{ r.suiteName }}</td>
+              <td><span class="status" [class]="r.status">{{ r.status }}</span></td>
+              <td class="mono code">
+                @for (g of r.git; track g.root) {
+                  <div>{{ describeGit(g) }}</div>
+                } @empty {
+                  <span class="faint">not recorded</span>
+                }
+              </td>
+              <td class="r num">{{ r.caseCount }}</td>
+              <td class="meta">
+                @if (editing() === r.id) {
+                  <div class="edit">
+                    <label><span class="sr-only">Note</span>
+                      <textarea #note rows="2" placeholder="Note">{{ r.note ?? "" }}</textarea>
+                    </label>
+                    <label><span class="sr-only">Tags, separated by commas</span>
+                      <input #tags placeholder="Tags, separated by commas" [value]="r.tags.join(', ')" />
+                    </label>
+                    <div class="edit-actions">
+                      <button type="button" class="quiet" (click)="saveMeta(r, note.value, tags.value)">Save</button>
+                      <button type="button" class="bare" (click)="editing.set(null)">Cancel</button>
+                    </div>
+                  </div>
+                } @else {
+                  @if (r.note) {
+                    <div class="note-text">{{ r.note }}</div>
+                  }
+                  @if (r.tags.length) {
+                    <div class="tags mono">
+                      @for (t of r.tags; track t) {
+                        <button type="button" class="bare tag" (click)="update({ tag: t })"
+                                [attr.aria-label]="'Show runs tagged ' + t">#{{ t }}</button>
+                      }
+                    </div>
+                  }
+                  <button type="button" class="bare edit-button" (click)="editing.set(r.id)"
+                          [attr.aria-label]="(r.note || r.tags.length ? 'Edit the note and tags' : 'Add a note') + ' to the run at ' + (r.startedAt | date: 'MMM d, HH:mm')">
+                    {{ r.note || r.tags.length ? "Edit" : "Add a note" }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="pager">
+        <span class="faint">{{ range().first }}–{{ range().last }} of {{ total() }}</span>
+        <button type="button" class="bare" (click)="update({ page: filter().page - 1 })" [disabled]="filter().page <= 1">Newer</button>
+        <button type="button" class="bare" (click)="update({ page: filter().page + 1 })" [disabled]="filter().page >= lastPage()">Older</button>
+      </div>
+    }
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

@@ -20,7 +20,7 @@ const other = git({ commit: "c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", shortCom
 
 const record: RunRecord = {
   id: "r", suiteId: "s", suiteName: "S", startedAt: "2026-01-01T00:00:00.000Z",
-  finishedAt: "2026-01-01T00:00:23.000Z", status: "completed", toolVersion: "hyperfine 1.20.0", caseCount: 0, error: null,
+  finishedAt: "2026-01-01T00:00:23.000Z", status: "completed", toolVersion: "hyperfine 1.20.0", caseCount: 0, error: null, note: null, tags: [],
 };
 
 describe("describeGit", () => {

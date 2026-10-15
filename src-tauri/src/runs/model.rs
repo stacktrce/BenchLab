@@ -15,6 +15,8 @@ pub struct RunRecord {
     pub tool_version: String,
     pub case_count: i64,
     pub error: Option<String>,
+    pub note: Option<String>,
+    pub tags: Vec<String>,
 }
 
 #[derive(Serialize, Debug)]

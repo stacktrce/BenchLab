@@ -14,6 +14,7 @@ const PATHS = {
   moon: "M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z",
   scratch: "M3 13l1-3 7-7 2 2-7 7zM10 4l2 2",
   trash: "M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9",
+  history: "M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.5H5M8 5v3l2 1.5",
   chart: "M2.5 2v11.5H14M5.5 11V8M8.5 11V5M11.5 11V7",
   flask: "M6 2h4M7 2v4L3 13a1 1 0 0 0 1 1.5h8A1 1 0 0 0 13 13L9 6V2",
 } as const;

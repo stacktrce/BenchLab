@@ -54,6 +54,7 @@ export function tauriMock({ empty, slow = false }) {
     record: {
       id, suiteId: suite.id, suiteName: suite.name, startedAt, finishedAt: startedAt.replace(":00.000", ":23.000"),
       status: "completed", toolVersion: "hyperfine 1.20.0 (sample)", caseCount: results.length, error: null,
+      note: null, tags: [],
     },
     config: suite,
     git: [git],
@@ -63,8 +64,13 @@ export function tauriMock({ empty, slow = false }) {
     const r = run(id, startedAt, results, git);
     return { ...r, record: { ...r.record, status: "partial", caseCount: 4, error } };
   };
+  const withMeta = (r, note, tags) => ({ ...r, record: { ...r.record, note, tags } });
   const runs = {
-    r1: run("r1", "2026-10-12T09:00:00.000Z", baseline, gitState("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0)),
+    r1: withMeta(
+      run("r1", "2026-10-12T09:00:00.000Z", baseline, gitState("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0)),
+      "Before the join rewrite. Laptop on mains power.",
+      ["baseline", "laptop"],
+    ),
     r2: run("r2", "2026-10-13T11:30:00.000Z", candidate, gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2)),
     // Reachable only by URL, so the run lists (and their screenshots) are unchanged.
     r3: failedRun(
@@ -162,6 +168,23 @@ export function tauriMock({ empty, slow = false }) {
             exitCode: 1, timedOut: false, cancelled: false, durationSeconds: 0.4, truncated: false,
             output: "Benchmark 1: regex split\nnode:internal/modules/cjs/loader:1228\n  throw err;\nError: Cannot find module 'bench/split.js'",
           };
+        case "search_runs": {
+          if (empty) return { items: [], total: 0 };
+          const f = args.filter;
+          const text = (f.text ?? "").toLowerCase();
+          const items = [runs.r3, runs.r2, runs.r1]
+            .filter((r) => !f.status || r.record.status === f.status)
+            .filter((r) => !text || `${r.record.suiteName} ${r.git[0].branch} ${r.record.note ?? ""}`.toLowerCase().includes(text))
+            .map((r) => ({ ...r.record, git: r.git }));
+          return { items, total: items.length };
+        }
+        case "set_run_meta": {
+          const r = Object.values(runs).find((x) => x.record.id === args.id);
+          r.record = { ...r.record, note: args.note?.trim() || null, tags: args.tags.map((t) => t.trim()).filter(Boolean) };
+          return r.record;
+        }
+        case "delete_runs":
+          return args.ids.length;
         case "suite_run_durations":
           return [40, 44, 46];
         case "plugin:event|listen":

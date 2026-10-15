@@ -47,6 +47,19 @@ export interface RunRecord {
   toolVersion: string;
   caseCount: number;
   error: string | null;
+  note: string | null;
+  tags: string[];
+}
+
+/** A run as the history page lists it, with the code state it measured. */
+export interface HistoryRow extends RunRecord {
+  git: GitInfo[];
+}
+
+export interface Page<T> {
+  items: T[];
+  /** Matching items in all pages. */
+  total: number;
 }
 
 /** A repository a case ran in, as it was when the run started. */
@@ -106,4 +119,14 @@ export interface DiagnoseResult {
   durationSeconds: number;
   output: string;
   truncated: boolean;
+}
+
+/** Mirrors the Rust `RunFilter`: null fields do not filter. */
+export interface RunFilter {
+  suiteId: string | null;
+  status: string | null;
+  from: string | null;
+  to: string | null;
+  text: string | null;
+  tag: string | null;
 }

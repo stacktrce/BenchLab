@@ -76,6 +76,9 @@ const MIGRATIONS: &[&str] = &[
         truncated INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (run_id, case_name, stream)
     );",
+    // v9: a note and tags per run, for the history page.
+    "ALTER TABLE runs ADD COLUMN note TEXT;
+    ALTER TABLE runs ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';",
 ];
 
 pub struct Db(Mutex<Connection>);
