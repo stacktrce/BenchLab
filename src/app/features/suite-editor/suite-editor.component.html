@@ -68,6 +68,8 @@
         @if (saved()) {
           <button type="button" role="tab" [attr.aria-selected]="tab() === 'history'" [class.on]="tab() === 'history'"
                   (click)="tab.set('history')">History <span class="num faint">{{ runs().length }}</span></button>
+          <button type="button" role="tab" [attr.aria-selected]="tab() === 'trends'" [class.on]="tab() === 'trends'"
+                  (click)="tab.set('trends')">Trends</button>
         }
       </div>
 
@@ -115,6 +117,10 @@
         <button type="button" class="quiet add" (click)="addCase()"><app-icon name="plus" /> Add case</button>
         @if (form.dirty && saved()) {
           <p class="faint dirty">Unsaved changes. Save before running.</p>
+        }
+      } @else if (tab() === "trends") {
+        @if (saved(); as suite) {
+          <app-trends-panel [suite]="suite" />
         }
       } @else {
         @if (runs().length === 0) {

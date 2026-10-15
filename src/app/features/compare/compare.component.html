@@ -173,6 +173,11 @@
       </button>
     }
 
+    <section class="charts">
+      <h2>Charts</h2>
+      <app-case-charts [sets]="chartSets()" />
+    </section>
+
     @if (flagged().length) {
       <div class="note warn">
         <p><strong>Read these with care</strong></p>

@@ -11,6 +11,7 @@ import { PAGE_SIZE } from "../../core/paging";
 import { ms, percent, signedMs } from "../../core/format";
 import { RunDetail, RunRecord } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
+import { CaseChartsComponent, CaseSet } from "../../shared/charts/case-charts.component";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { IconComponent } from "../../shared/icon.component";
@@ -18,7 +19,7 @@ import { RangeStripComponent } from "../../shared/range-strip.component";
 
 @Component({
   selector: "app-compare",
-  imports: [DatePipe, RouterLink, RangeStripComponent, IconComponent],
+  imports: [DatePipe, RouterLink, RangeStripComponent, CaseChartsComponent, IconComponent],
   templateUrl: "./compare.component.html",
   styleUrl: "./compare.component.css",
 })
@@ -36,6 +37,7 @@ export class CompareComponent {
   readonly baselineRun = signal<RunDetail | null>(null);
   readonly candidateRun = signal<RunDetail | null>(null);
   readonly rows = signal<ComparisonRow[]>([]);
+  protected readonly chartSets = signal<CaseSet[]>([]);
   readonly message = signal<string | null>(null);
   /** Why the baseline was chosen, when the user did not pick one. */
   readonly autoBaseline = signal<"pinned" | "previous" | null>(null);
@@ -91,6 +93,7 @@ export class CompareComponent {
     this.baselineRun.set(null);
     this.candidateRun.set(null);
     this.rows.set([]);
+    this.chartSets.set([]);
     this.autoBaseline.set(null);
     this.limit.set(PAGE_SIZE);
     this.message.set(null);
@@ -131,7 +134,13 @@ export class CompareComponent {
       this.baselineRun.set(baseline);
       const b = this.parse(baseline, "Baseline");
       const c = this.parse(candidate, "Candidate");
-      if (b && c) this.rows.set(applyBudgets(compareRuns(b, c), candidate.config));
+      if (b && c) {
+        this.rows.set(applyBudgets(compareRuns(b, c), candidate.config));
+        this.chartSets.set([
+          { label: "Baseline", cases: b.cases, tone: "base" },
+          { label: "Candidate", cases: c.cases, tone: "cand" },
+        ]);
+      }
     } catch (e) {
       if (isCurrent()) this.message.set(errorMessage(e));
     } finally {

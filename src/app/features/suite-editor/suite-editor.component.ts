@@ -11,14 +11,15 @@ import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
 import { IconComponent } from "../../shared/icon.component";
 import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm.component";
+import { TrendsPanelComponent } from "./trends-panel.component";
 import { confirmItems, confirmSummary } from "./run-confirmation";
 import { createCaseGroup, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
 
-type Tab = "cases" | "history";
+type Tab = "cases" | "history" | "trends";
 
 @Component({
   selector: "app-suite-editor",
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, RunConfirmComponent, IconComponent],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, RunConfirmComponent, IconComponent, TrendsPanelComponent],
   templateUrl: "./suite-editor.component.html",
   styleUrl: "./suite-editor.component.css",
   host: {

@@ -121,6 +121,9 @@ fn insert_demo_run(
         ],
     )
     .map_err(sql_err)?;
+    if let Some(raw) = o.raw_output() {
+        crate::runs::index_run(conn, &id, &raw)?;
+    }
     Ok(id)
 }
 

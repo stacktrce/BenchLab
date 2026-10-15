@@ -10,10 +10,12 @@
 import puppeteer from "puppeteer-core";
 import { ensureServer, findBrowser, stopServer } from "./browser.mjs";
 import { auditAxe } from "./checks/axe.mjs";
+import { auditChartExport } from "./checks/chart-export.mjs";
 import { auditDialogKeyboard } from "./checks/dialog-keyboard.mjs";
 import { auditOverlappingLoads } from "./checks/overlapping-loads.mjs";
 import { auditRunVisibility } from "./checks/run-visibility.mjs";
 import { auditTabOrder } from "./checks/tab-order.mjs";
+import { auditTrendKeyboard } from "./checks/trend-keyboard.mjs";
 import { failureCount } from "./report.mjs";
 
 const shotsDir = process.argv.includes("--shots") ? process.argv[process.argv.indexOf("--shots") + 1] : undefined;
@@ -24,6 +26,8 @@ try {
   await auditAxe(browser, { shotsDir });
   await auditDialogKeyboard(browser);
   await auditTabOrder(browser);
+  await auditTrendKeyboard(browser);
+  await auditChartExport(browser);
   await auditOverlappingLoads(browser);
   await auditRunVisibility(browser);
 } finally {

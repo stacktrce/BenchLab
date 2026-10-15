@@ -97,7 +97,7 @@ Revisit only if a feature adds real CPU work on the timing arrays (for example b
 
 Rust (`src-tauri/src`): `db` owns the schema and migrations; `suites/`, `runs/` and `hyperfine/` are folders that each split into `model` (types), a storage or process module, and `commands` (the Tauri commands, named without a suffix: `list_suites`, `get_run`); tests sit beside the code or in a `tests.rs` next to a module; `testing.rs` has the shared builders. A new command is registered in `lib.rs` through its `commands` module path, and must also be called from `src/app/core` and answered by the audit mock; `ipc-contract.spec.ts` fails if the three disagree.
 
-TypeScript (`src/app`): `core/` is framework-free logic with specs (`compare/` is one module per concern, `errors.ts` turns anything thrown into text, `latest.ts` guards overlapping loads, `active-run.service.ts` tracks the running benchmark); `features/` has one folder per page, with form mapping and other pure logic in plain files beside the component; `shared/` has components used by several pages.
+TypeScript (`src/app`): `core/` is framework-free logic with specs (`compare/` is one module per concern, `charts/` turns timings into plain geometry (bins, scales, ticks, summaries and data tables) so the SVG components stay thin, `errors.ts` turns anything thrown into text, `latest.ts` guards overlapping loads, `active-run.service.ts` tracks the running benchmark); `features/` has one folder per page, with form mapping and other pure logic in plain files beside the component; `shared/` has components used by several pages (`shared/charts/` holds the SVG chart components).
 
 ### Rust
 
@@ -155,6 +155,7 @@ For a refactor that must not change how anything looks, write screenshots before
 5. **One benchmark at a time.** Cancel must kill the whole process tree.
 6. **User data survives upgrades.** Migrations are append-only and tested from the previous version; a database from a newer build is refused, not damaged.
 7. **Design:** the UI is meant to look like a calm lab notebook, not a generic dashboard template. Paper (light) and graphite (dark) themes via the CSS variables in `src/styles.css`; one accent (burnt orange) reserved for Run and focus; IBM Plex Sans and Mono with tabular numerals for data; hairline rules instead of card boxes; notes marked with a left rule; status as a dot and a word; small inline SVG icons (`IconComponent`). No pill badges, gradients, emoji or unicode glyphs used as icons. Results use distribution strips plus numbers. Commands are always monospace and shown in full. If a screen starts to look like a template, redo it.
+8. **Charts are honest and readable by everyone.** One time unit per chart; never draw a band the data does not give (no spread, no band); a zoomed axis says so; trends use only completed runs. Colours come only from the CSS variables. Every chart has a spoken summary (`role="img"` and `aria-label`, or one tab stop with arrow keys) and a Show data table. Layout maths lives in `core/charts` with tests; the component only draws it.
 
 ## 8. Definition of done
 

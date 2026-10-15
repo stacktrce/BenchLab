@@ -1,4 +1,5 @@
 use super::model::{RunDetail, RunRecord, SuiteOutcome};
+use super::series::index_run;
 use crate::db::{now_iso, sql_err};
 use crate::suites::Suite;
 use rusqlite::{Connection, OptionalExtension, params};
@@ -54,6 +55,11 @@ pub(super) fn insert_run(
         ],
     )
     .map_err(sql_err)?;
+    if let Some(raw) = &raw {
+        // A run must never be lost because indexing failed; backfill_run_cases retries on the
+        // next start.
+        let _ = index_run(conn, &id, raw);
+    }
     get_run(conn, &id)
 }
 

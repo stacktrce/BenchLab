@@ -1,5 +1,6 @@
 use super::execute::execute_suite;
 use super::model::{RunDetail, RunRecord};
+use super::series::{self, CasePoint};
 use super::store;
 use crate::db::{Db, now_iso};
 use crate::hyperfine::{self, RunControl};
@@ -45,4 +46,19 @@ pub fn list_runs(
 #[tauri::command]
 pub fn get_run(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
     db.with(|c| store::get_run(c, &id))
+}
+
+#[tauri::command]
+pub fn case_series(
+    db: State<'_, Db>,
+    suite_id: String,
+    case_name: String,
+    limit: Option<i64>,
+) -> Result<Vec<CasePoint>, String> {
+    db.with(|c| series::case_series(c, &suite_id, &case_name, limit.unwrap_or(500)))
+}
+
+#[tauri::command]
+pub fn case_names(db: State<'_, Db>, suite_id: String) -> Result<Vec<String>, String> {
+    db.with(|c| series::case_names(c, &suite_id))
 }

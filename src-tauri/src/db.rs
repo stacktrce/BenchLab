@@ -53,6 +53,20 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE suites ADD COLUMN baseline_run_id TEXT REFERENCES runs(id) ON DELETE SET NULL;",
     // v6: optional per-case regression budget, in percent slower than the baseline.
     "ALTER TABLE cases ADD COLUMN budget_percent REAL CHECK (budget_percent IS NULL OR budget_percent > 0);",
+    // v7: each case's summary numbers per run, copied out of runs.raw_output so a case's history
+    // can be read without parsing every stored run. Filled for old runs by backfill_run_cases.
+    "CREATE TABLE run_cases (
+        run_id    TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+        case_name TEXT NOT NULL,
+        mean      REAL NOT NULL,
+        stddev    REAL,
+        median    REAL NOT NULL,
+        min       REAL NOT NULL,
+        max       REAL NOT NULL,
+        samples   INTEGER NOT NULL,
+        PRIMARY KEY (run_id, case_name)
+    );
+    CREATE INDEX idx_run_cases_name ON run_cases(case_name, run_id);",
 ];
 
 pub struct Db(Mutex<Connection>);

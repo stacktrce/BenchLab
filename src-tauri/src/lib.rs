@@ -18,6 +18,7 @@ pub fn run() {
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             let conn = db::open(&dir.join("benchlab.db"))?;
+            runs::backfill_run_cases(&conn)?;
             app.manage(db::Db::new(conn));
             app.manage(hyperfine::RunControl::default());
             Ok(())
@@ -35,8 +36,11 @@ pub fn run() {
             runs::commands::run_suite,
             runs::commands::list_runs,
             runs::commands::get_run,
+            runs::commands::case_series,
+            runs::commands::case_names,
             demo::load_demo,
             files::write_text_file,
+            files::write_binary_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
