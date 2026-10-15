@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- BenchLab's mark: a measuring flask, paper on graphite, filled with the burnt-orange accent.
+       Drawn on the 16-unit grid of the app's own flask icon, scaled 44x. -->
+  <rect width="1024" height="1024" rx="224" fill="#1d1c1a"/>
+  <g transform="translate(160 136) scale(44)">
+    <path d="M4.8 10.2h6.4l1.6 2.8a0.9 0.9 0 0 1-0.8 1.4H4a0.9 0.9 0 0 1-0.8-1.4z" fill="#ff8a4c"/>
+    <path d="M6 2h4M7 2v4L3 13a1 1 0 0 0 1 1.5h8a1 1 0 0 0 1-1.5L9 6V2" fill="none" stroke="#fbfaf7"
+          stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8.6 7.4h0.6M9.4 8.9h0.6" stroke="#fbfaf7" stroke-width="0.6" stroke-linecap="round"/>
+  </g>
+</svg>
