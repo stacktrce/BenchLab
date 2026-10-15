@@ -1,0 +1,26 @@
+<div class="pickers">
+  <label>
+    <span>Baseline</span>
+    <select #baselinePicker (change)="picked.emit({ which: 'baseline', id: baselinePicker.value })">
+      @for (r of runs(); track r.id) {
+        <option [value]="r.id" [selected]="r.id === baselineId()" [disabled]="r.id === candidateId()">
+          {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}
+        </option>
+      }
+    </select>
+  </label>
+  <button type="button" class="bare swap" (click)="swapped.emit()" [disabled]="!baselineId()"
+          aria-label="Swap baseline and candidate" title="Swap">
+    <app-icon name="swap" />
+  </button>
+  <label>
+    <span>Candidate</span>
+    <select #candidatePicker (change)="picked.emit({ which: 'candidate', id: candidatePicker.value })">
+      @for (r of runs(); track r.id) {
+        <option [value]="r.id" [selected]="r.id === candidateId()" [disabled]="r.id === baselineId()">
+          {{ r.startedAt | date: "MMM d, HH:mm" }} · {{ r.status }} · {{ r.toolVersion }}
+        </option>
+      }
+    </select>
+  </label>
+</div>

@@ -1,0 +1,22 @@
+.pickers {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.pickers label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pickers label > span {
+  font-weight: 500;
+}
+
+.swap {
+  margin-bottom: 4px;
+}
