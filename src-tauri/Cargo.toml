@@ -27,6 +27,7 @@ uuid = { version = "1.28.0", features = ["v4"] }
 tauri-plugin-dialog = "2.8.2"
 # Already pulled in by the dialog plugin; used directly for the startup error, before the event loop runs.
 rfd = { version = "0.16", default-features = false }
+rust_xlsxwriter = { version = "0.99.1", default-features = false }
 
 
 [target.'cfg(windows)'.dependencies]
@@ -39,3 +40,6 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[dev-dependencies]
+zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }

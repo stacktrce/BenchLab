@@ -9,6 +9,7 @@ import { describeGit } from "../../core/format";
 import { RunDetail, Suite } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
+import { runToWorkbook } from "../../core/spreadsheet";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon/icon.component";
@@ -109,5 +110,11 @@ export class RunDetailComponent {
     const d = this.detail();
     const r = this.result();
     if (d && r) this.files.save(exportFileName(d.record.suiteName, "csv"), runToCsv(d.record, r), "csv");
+  }
+
+  saveExcel(): void {
+    const d = this.detail();
+    const r = this.result();
+    if (d && r) this.files.saveWorkbook(exportFileName(d.record.suiteName, "xlsx"), runToWorkbook(d.record, r, d.git));
   }
 }

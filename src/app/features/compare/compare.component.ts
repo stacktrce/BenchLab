@@ -9,6 +9,7 @@ import { Latest } from "../../core/latest";
 import { RunDetail, RunRecord } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
+import { comparisonToWorkbook } from "../../core/spreadsheet";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { IconComponent } from "../../shared/icon/icon.component";
 import { ComparisonTableComponent } from "./comparison-table/comparison-table.component";
@@ -176,6 +177,15 @@ export class CompareComponent {
     const c = this.candidateRun();
     if (c && this.rows().length) {
       this.files.save(exportFileName(`${c.record.suiteName} comparison`, "csv"), comparisonToCsv(this.rows()), "csv");
+    }
+  }
+
+  saveExcel(): void {
+    const b = this.baselineRun();
+    const c = this.candidateRun();
+    if (b && c && this.rows().length) {
+      const book = comparisonToWorkbook(this.rows(), b.record, c.record, this.configChanges(), this.gitNotes());
+      this.files.saveWorkbook(exportFileName(`${c.record.suiteName} comparison`, "xlsx"), book);
     }
   }
 }

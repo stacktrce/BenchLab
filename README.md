@@ -38,7 +38,7 @@ The sidebar footer shows which one is in use and its version. Every run records 
 
    ![Trends for one case](docs/screenshots/light-trends.png)
 
-5. **Export.** Markdown or CSV from a run or a comparison.
+5. **Export.** Markdown, CSV or Excel from a run or a comparison. Use Excel for spreadsheets: a CSV depends on the locale's separators (with a decimal comma, Excel puts each CSV line in one cell), while the `.xlsx` stores numbers as numbers, with the notes and method on a second sheet.
 
 **Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing. Its commands (`echo`, listing a directory, a counting loop, starting a shell) are real and harmless, so you can also run it as it is.
 
@@ -72,7 +72,7 @@ BenchLab executes the commands you write, through hyperfine's shell, with your u
 - Nothing runs on startup, on opening a suite, or on loading sample data. Running always goes through the confirmation dialog.
 - The backend runs the saved suite, not what the screen holds, so the commands you confirm are the commands that execute.
 - Commands reach hyperfine as single arguments; BenchLab never builds shell strings itself.
-- Exports are written only to `.md`, `.csv` or `.txt` paths chosen in the system save dialog; chart images only to `.png`, and only if the bytes are a PNG. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
+- Exports are written only to `.md`, `.csv` or `.txt` paths chosen in the system save dialog; chart images only to `.png`, and only if the bytes are a PNG; spreadsheets only to `.xlsx`, where text is always stored as text, never as a formula. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
 - Only one benchmark runs at a time, because parallel runs distort each other's timings.
 - To record the code state, BenchLab runs read-only git commands (`rev-parse`, `symbolic-ref`, `status`) in each case's working directory, with the fsmonitor hook disabled so a repository's own config cannot make it run a program. If git is missing or the directory is not a repository, nothing is recorded and nothing fails.
 
