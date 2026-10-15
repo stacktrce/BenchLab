@@ -245,8 +245,13 @@ button.danger {
 
 .row-actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
+}
+
+.row-actions button {
+  white-space: nowrap;
 }
 
 kbd {
@@ -297,7 +302,12 @@ kbd {
   white-space: nowrap;
 }
 
+/* A long suite name gives way to the actions instead of wrapping the bar onto two lines. */
 .crumbs a {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-decoration: none;
 }
 
