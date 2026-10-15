@@ -1,4 +1,5 @@
 use super::tree::ProcessTree;
+use crate::console::without_window;
 use serde::Serialize;
 use std::io::Read;
 use std::path::Path;
@@ -112,7 +113,8 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
     if let Some(dir) = job.working_dir.filter(|d| !d.trim().is_empty()) {
         cmd.current_dir(dir);
     }
-    cmd.stdin(Stdio::null())
+    without_window(&mut cmd)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(unix)]

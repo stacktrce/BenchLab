@@ -1,3 +1,4 @@
+use crate::console::without_window;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -12,17 +13,13 @@ const HYPERFINE_NAME: &str = if cfg!(windows) {
 /// installer edited PATH (e.g. an IDE-launched dev server) never sees the new entries.
 #[cfg(windows)]
 fn registry_path_dirs() -> Vec<PathBuf> {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let mut dirs = Vec::new();
     for key in [
         "HKCU\\Environment",
         "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
     ] {
-        let Ok(out) = Command::new("reg")
-            .args(["query", key, "/v", "Path"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+        let Ok(out) =
+            without_window(Command::new("reg").args(["query", key, "/v", "Path"])).output()
         else {
             continue;
         };
@@ -141,8 +138,7 @@ pub fn locate_hyperfine() -> Result<PathBuf, String> {
 }
 
 pub fn tool_version(hyperfine: &Path) -> String {
-    Command::new(hyperfine)
-        .arg("--version")
+    without_window(Command::new(hyperfine).arg("--version"))
         .output()
         .ok()
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())

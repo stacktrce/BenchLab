@@ -3,6 +3,7 @@
 //! Only `git` plumbing and `status` are used, with the fsmonitor hook disabled: a repository's own
 //! config can name a program for fsmonitor, and reading a repo's state must not execute it.
 
+use crate::console::without_window;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::Path;
@@ -31,13 +32,7 @@ fn git(dir: &Path, args: &[&str]) -> Option<String> {
         .args(args)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GIT_OPTIONAL_LOCKS", "0");
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
-    let out = cmd.output().ok()?;
+    let out = without_window(&mut cmd).output().ok()?;
     out.status
         .success()
         .then(|| String::from_utf8_lossy(&out.stdout).trim_end().to_string())
