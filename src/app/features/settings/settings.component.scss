@@ -1,0 +1,69 @@
+fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 500;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.numbers {
+  display: flex;
+  gap: 20px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.narrow {
+  width: 90px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+dt {
+  color: var(--ink-2);
+}
+
+dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+  word-break: break-all;
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 400;
+}

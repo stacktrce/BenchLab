@@ -7,6 +7,7 @@ import { errorMessage } from "./core/errors";
 import { ToolInfo } from "./core/parser/hyperfine.types";
 import { SuiteApiService } from "./core/suite-api.service";
 import { RunProgressService } from "./core/run-progress.service";
+import { SettingsService } from "./core/settings.service";
 import { ThemeService } from "./core/theme.service";
 import { ToastService } from "./core/toast.service";
 import { IconComponent } from "./shared/icon/icon.component";
@@ -22,6 +23,8 @@ export class AppComponent {
   protected readonly toast = inject(ToastService);
   protected readonly active = inject(ActiveRunService);
   protected readonly progress = inject(RunProgressService).view;
+  /** Created here so a chosen accent and text size apply from the first screen. */
+  private readonly settings = inject(SettingsService);
   protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly runner = inject(BenchmarkRunnerService);
