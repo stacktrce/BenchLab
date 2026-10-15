@@ -1,3 +1,4 @@
+use super::events::{RunEvent, RunSink, TauriSink};
 use super::execute::execute_suite;
 use super::model::{RunDetail, RunRecord};
 use super::series::{self, CasePoint};
@@ -11,6 +12,7 @@ use tauri::State;
 /// Runs the saved suite. The frontend must have shown the user every command first.
 #[tauri::command]
 pub async fn run_suite(
+    app: tauri::AppHandle,
     db: State<'_, Db>,
     control: State<'_, RunControl>,
     suite_id: String,
@@ -24,15 +26,21 @@ pub async fn run_suite(
     let active = control.begin()?;
     let cancel = active.flag();
 
-    let (suite, tool_version, outcome) = tauri::async_runtime::spawn_blocking(move || {
+    let sink = TauriSink(app);
+    let (suite, tool_version, outcome, sink) = tauri::async_runtime::spawn_blocking(move || {
         let version = hyperfine::tool_version(&hyperfine_path);
-        let outcome = execute_suite(&hyperfine_path, &suite, &cancel);
-        (suite, version, outcome)
+        let outcome = execute_suite(&hyperfine_path, &suite, &cancel, &sink);
+        (suite, version, outcome, sink)
     })
     .await
     .map_err(|e| format!("Suite run failed: {e}"))?;
 
-    db.with(|c| store::insert_run(c, &suite, &started_at, &tool_version, &outcome))
+    let stored = db.with(|c| store::insert_run(c, &suite, &started_at, &tool_version, &outcome));
+    sink.emit(RunEvent::Finished {
+        run_id: stored.as_ref().ok().map(|r| r.record.id.clone()),
+        status: outcome.status().to_string(),
+    });
+    stored
 }
 
 #[tauri::command]

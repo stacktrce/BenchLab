@@ -1,4 +1,5 @@
 pub mod commands;
+mod events;
 mod execute;
 mod model;
 mod series;
