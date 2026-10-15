@@ -1,6 +1,7 @@
 //! Stopping hyperfine together with everything it started. Killing only hyperfine would leave the
 //! benchmarked command (a grandchild, behind the shell) running.
 
+use crate::console::without_window;
 use std::process::{Child, Command};
 
 /// Created right after spawning, so the child cannot have started anything yet.
@@ -40,12 +41,13 @@ impl ProcessTree {
 /// hyperfine starts a new shell for every run, and one started during the walk escapes it.
 #[cfg(windows)]
 fn taskkill(child: &Child) {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    let _ = Command::new("taskkill")
-        .args(["/T", "/F", "/PID", &child.id().to_string()])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output();
+    let _ = without_window(Command::new("taskkill").args([
+        "/T",
+        "/F",
+        "/PID",
+        &child.id().to_string(),
+    ]))
+    .output();
 }
 
 /// A Windows job object collects every process the child starts, however quickly, and

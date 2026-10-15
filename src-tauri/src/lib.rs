@@ -1,3 +1,4 @@
+mod console;
 mod db;
 mod demo;
 mod files;
