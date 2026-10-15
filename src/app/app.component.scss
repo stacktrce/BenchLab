@@ -22,8 +22,28 @@
 }
 
 .wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+.mark {
+  width: 16px;
+  height: 16px;
+
+  .liquid {
+    fill: var(--accent);
+  }
+
+  .glass {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
 
 .item {
