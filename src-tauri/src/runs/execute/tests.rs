@@ -39,6 +39,11 @@ fn executes_real_hyperfine_per_case_and_isolates_failures() {
     assert_eq!(names, ["good", "hooks"]);
     assert_eq!(out.errors.len(), 1);
     assert!(out.errors[0].starts_with("\"bad\""), "{:?}", out.errors);
+    assert!(
+        out.errors[0].contains("The command exited with code 3"),
+        "{:?}",
+        out.errors
+    );
 }
 
 /// Cancelling must return quickly and leave nothing behind.

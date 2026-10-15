@@ -40,7 +40,7 @@ The sidebar footer shows which one is in use and its version. Every run records 
 
 5. **Export.** Markdown or CSV from a run or a comparison.
 
-**Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing.
+**Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing. Its commands (`echo`, listing a directory, a counting loop, starting a shell) are real and harmless, so you can also run it as it is.
 
 ![A suite](docs/screenshots/dark-suite.png)
 

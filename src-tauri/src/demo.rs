@@ -1,5 +1,6 @@
-//! Sample data so the app can be explored without hyperfine or real commands.
-//! Commands are placeholders; the numbers are synthetic and deterministic.
+//! Sample data so the app can be explored without running anything first. The two runs are
+//! synthetic and deterministic; the commands are real, harmless and run in hyperfine's
+//! default shell on each platform, so the suite can also be run as it is.
 
 use crate::db::{Db, sql_err};
 use crate::git::GitInfo;
@@ -9,7 +10,7 @@ use rusqlite::{Connection, params};
 use serde_json::{Value, json};
 use tauri::State;
 
-pub const DEMO_SUITE_NAME: &str = "Demo: string building (sample data)";
+pub const DEMO_SUITE_NAME: &str = "Demo: shell basics (sample data)";
 
 struct Spec {
     name: &'static str,
@@ -127,6 +128,105 @@ fn insert_demo_run(
     Ok(id)
 }
 
+/// Command per case for hyperfine's default shell: cmd.exe on Windows, sh elsewhere.
+#[cfg(windows)]
+const COMMANDS: [&str; 4] = [
+    "echo hello",
+    "dir /b",
+    "for /L %i in (1,1,20000) do @rem",
+    "cmd /c exit 0",
+];
+#[cfg(not(windows))]
+const COMMANDS: [&str; 4] = [
+    "echo hello",
+    "ls",
+    "i=0; while [ \"$i\" -lt 20000 ]; do i=$((i+1)); done",
+    "sh -c true",
+];
+
+const BUDGET_PERCENT: [Option<f64>; 4] = [Some(5.0), None, Some(10.0), Some(20.0)];
+
+/// Means are close to what these commands take on a Windows laptop, so a real run of the
+/// suite lands near the sample instead of looking like a dramatic change.
+const BASELINE: [Spec; 4] = [
+    Spec {
+        name: "echo",
+        mean_ms: 2.3,
+        noise: 0.03,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "list directory",
+        mean_ms: 10.6,
+        noise: 0.04,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "count to 20000",
+        mean_ms: 7.2,
+        noise: 0.03,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "start another shell",
+        mean_ms: 60.0,
+        noise: 0.05,
+        runs: 10,
+        cold_first: 3.2,
+    },
+];
+const CANDIDATE: [Spec; 4] = [
+    Spec {
+        name: "echo",
+        mean_ms: 2.28,
+        noise: 0.06,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "list directory",
+        mean_ms: 8.2,
+        noise: 0.03,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "count to 20000",
+        mean_ms: 9.3,
+        noise: 0.04,
+        runs: 10,
+        cold_first: 1.0,
+    },
+    Spec {
+        name: "start another shell",
+        mean_ms: 59.0,
+        noise: 0.12,
+        runs: 3,
+        cold_first: 1.0,
+    },
+];
+
+fn demo_cases() -> Vec<Case> {
+    BASELINE
+        .iter()
+        .zip(COMMANDS)
+        .zip(BUDGET_PERCENT)
+        .map(|((spec, command), budget_percent)| Case {
+            id: String::new(),
+            name: spec.name.into(),
+            command: command.into(),
+            setup_command: None,
+            cleanup_command: None,
+            working_directory: None,
+            enabled: true,
+            budget_percent,
+        })
+        .collect()
+}
+
 /// Creates the demo suite and two runs. Returns the suite id; reuses an existing demo suite.
 pub fn ensure_demo_suite(conn: &Connection) -> Result<String, String> {
     if let Ok(id) = conn.query_row(
@@ -136,102 +236,26 @@ pub fn ensure_demo_suite(conn: &Connection) -> Result<String, String> {
     ) {
         return Ok(id);
     }
-    let case = |name: &str, command: &str, budget_percent: Option<f64>| Case {
-        id: String::new(),
-        name: name.into(),
-        command: command.into(),
-        setup_command: None,
-        cleanup_command: None,
-        working_directory: None,
-        enabled: true,
-        budget_percent,
-    };
     let suite = save_suite(
         conn,
         Suite {
             id: String::new(),
             name: DEMO_SUITE_NAME.into(),
-            description: "Sample data. The commands are placeholders; edit them before running."
-                .into(),
+            description: "Sample data: the two runs are synthetic. The commands are real and harmless, so you can run the suite as it is.".into(),
             runs: 10,
             warmup: 1,
             baseline_run_id: None,
             schema_version: 0,
             created_at: String::new(),
             updated_at: String::new(),
-            cases: vec![
-                case("concat with +=", "node bench/concat.js", Some(5.0)),
-                case("array join", "node bench/join.js", None),
-                case("template literal", "node bench/template.js", Some(10.0)),
-                case("regex split", "node bench/split.js", Some(20.0)),
-            ],
+            cases: demo_cases(),
         },
     )?;
 
-    let baseline = [
-        Spec {
-            name: "concat with +=",
-            mean_ms: 42.0,
-            noise: 0.03,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "array join",
-            mean_ms: 31.0,
-            noise: 0.04,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "template literal",
-            mean_ms: 28.0,
-            noise: 0.03,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "regex split",
-            mean_ms: 55.0,
-            noise: 0.05,
-            runs: 10,
-            cold_first: 3.2,
-        },
-    ];
-    let candidate = [
-        Spec {
-            name: "concat with +=",
-            mean_ms: 41.5,
-            noise: 0.06,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "array join",
-            mean_ms: 24.0,
-            noise: 0.03,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "template literal",
-            mean_ms: 36.0,
-            noise: 0.04,
-            runs: 10,
-            cold_first: 1.0,
-        },
-        Spec {
-            name: "regex split",
-            mean_ms: 54.0,
-            noise: 0.12,
-            runs: 3,
-            cold_first: 1.0,
-        },
-    ];
     let before = sample_git("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0);
     let after = sample_git("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2);
-    let first = insert_demo_run(conn, &suite, "-1 day", &outcome(&baseline, 11, before))?;
-    insert_demo_run(conn, &suite, "-2 hours", &outcome(&candidate, 97, after))?;
+    let first = insert_demo_run(conn, &suite, "-1 day", &outcome(&BASELINE, 11, before))?;
+    insert_demo_run(conn, &suite, "-2 hours", &outcome(&CANDIDATE, 97, after))?;
     set_baseline(conn, &suite.id, Some(&first))?;
     Ok(suite.id)
 }
@@ -275,5 +299,40 @@ mod tests {
         assert_eq!(a["times"].as_array().unwrap().len(), 8);
         assert!(a["stddev"].as_f64().unwrap() > 0.0);
         assert!(a["max"].as_f64().unwrap() >= a["min"].as_f64().unwrap());
+    }
+
+    #[test]
+    fn every_case_has_synthetic_results_under_the_same_name() {
+        let conn = memory();
+        let id = ensure_demo_suite(&conn).unwrap();
+        let suite = crate::suites::load_suite(&conn, &id).unwrap();
+        let names: Vec<_> = suite.cases.iter().map(|c| c.name.as_str()).collect();
+        let synthetic: Vec<_> = BASELINE.iter().map(|s| s.name).collect();
+        assert_eq!(names, synthetic);
+        assert_eq!(names, CANDIDATE.iter().map(|s| s.name).collect::<Vec<_>>());
+    }
+
+    /// The sample suite must be runnable as it is: its commands used to be placeholders that
+    /// failed with exit code 1.
+    #[test]
+    fn demo_commands_run_successfully_with_hyperfine() {
+        let Some(hf) = crate::testing::real_hyperfine() else {
+            return;
+        };
+        for case in demo_cases() {
+            let job = crate::hyperfine::Job {
+                name: Some(&case.name),
+                command: &case.command,
+                setup: None,
+                cleanup: None,
+                working_dir: None,
+                runs: Some(2),
+                warmup: Some(0),
+                timeout: std::time::Duration::from_secs(60),
+                cancel: None,
+            };
+            let out = crate::hyperfine::exec(&hf, &job).unwrap();
+            assert_eq!(out.exit_code, Some(0), "{}: {}", case.name, out.stderr);
+        }
     }
 }

@@ -8,13 +8,6 @@ use std::time::Duration;
 /// Per-case limit for suite runs. Real benchmarks outlast the 30 s quick-run default.
 const SUITE_CASE_TIMEOUT_SECS: u64 = 600;
 
-fn first_line(s: &str) -> &str {
-    s.lines()
-        .map(str::trim)
-        .find(|l| !l.is_empty())
-        .unwrap_or("")
-}
-
 /// Blocking: runs each enabled case with its own hyperfine process so per-case
 /// setup/cleanup/working directory apply, then merges the result arrays.
 pub(super) fn execute_suite(
@@ -77,22 +70,13 @@ pub(super) fn execute_suite(
             .and_then(|j| serde_json::from_str::<serde_json::Value>(j).ok())
             .and_then(|v| v.get("results").and_then(|r| r.as_array().cloned()))
             .filter(|r| !r.is_empty());
-        match (out.exit_code, parsed) {
-            (Some(0), Some(results)) => outcome.results.extend(results),
-            (code, _) => {
-                let detail = first_line(&out.stderr);
-                outcome.errors.push(format!(
-                    "\"{}\": hyperfine exited with code {}{}",
-                    case.name,
-                    code.map(|c| c.to_string())
-                        .unwrap_or_else(|| "unknown".into()),
-                    if detail.is_empty() {
-                        String::new()
-                    } else {
-                        format!(" ({detail})")
-                    }
-                ));
-            }
+        match (parsed, out.failure) {
+            (Some(results), None) => outcome.results.extend(results),
+            (_, failure) => outcome.errors.push(format!(
+                "\"{}\": {}",
+                case.name,
+                failure.unwrap_or_else(|| "hyperfine produced no results.".into())
+            )),
         }
     }
     outcome
