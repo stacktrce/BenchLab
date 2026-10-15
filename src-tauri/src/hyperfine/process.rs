@@ -1,8 +1,11 @@
+use super::tree::ProcessTree;
 use serde::Serialize;
 use std::io::Read;
 use std::path::Path;
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize)]
@@ -29,35 +32,54 @@ pub struct Job<'a> {
     pub cancel: Option<&'a AtomicBool>,
 }
 
-/// Kills hyperfine and everything it started. Killing only hyperfine would leave the
-/// benchmarked command (a grandchild, behind the shell) running.
-fn kill_tree(child: &mut Child) {
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        let _ = Command::new("taskkill")
-            .args(["/T", "/F", "/PID", &child.id().to_string()])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output();
-    }
-    #[cfg(unix)]
-    {
-        // The child leads its own process group (see `exec`), so a negative pid reaches all of it.
-        let _ = Command::new("kill")
-            .args(["-KILL", &format!("-{}", child.id())])
-            .output();
-    }
-    let _ = child.kill();
-    let _ = child.wait();
-}
-
 /// `--name=value` as one argument. Passed as two, a value that starts with "-" (a case called
 /// "-fast", a hook such as "--version") is parsed as another option and hyperfine refuses to run.
 fn flag(name: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
     let mut arg = std::ffi::OsString::from(format!("--{name}="));
     arg.push(value);
     arg
+}
+
+/// How long to keep collecting output after hyperfine has exited.
+const DRAIN_GRACE: Duration = Duration::from_secs(2);
+
+/// Reads a child's pipe on a thread so a full pipe buffer cannot stall the child, keeping what it
+/// has read so far where `finish` can still get it.
+struct Drain {
+    collected: Arc<Mutex<Vec<u8>>>,
+    thread: JoinHandle<()>,
+}
+
+impl Drain {
+    fn start(mut pipe: impl Read + Send + 'static) -> Self {
+        let collected = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&collected);
+        let thread = std::thread::spawn(move || {
+            let mut chunk = [0u8; 8192];
+            while let Ok(n) = pipe.read(&mut chunk) {
+                if n == 0 {
+                    break;
+                }
+                if let Ok(mut buf) = sink.lock() {
+                    buf.extend_from_slice(&chunk[..n]);
+                }
+            }
+        });
+        Self { collected, thread }
+    }
+
+    /// Waits until `deadline` for the pipe to close, then returns what was read. A background process
+    /// the benchmarked command left behind inherits the pipe (always on Windows) and would keep it
+    /// open for as long as it lives; its reader thread simply ends when that process does.
+    fn finish(self, deadline: Instant) -> String {
+        while !self.thread.is_finished() && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        self.collected
+            .lock()
+            .map(|buf| String::from_utf8_lossy(&buf).into_owned())
+            .unwrap_or_default()
+    }
 }
 
 /// Blocking: call it from `spawn_blocking`, never on the async runtime.
@@ -103,20 +125,13 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
         .spawn()
         .map_err(|e| format!("Failed to start hyperfine: {e}"))?;
 
-    // Drain pipes on threads so a full pipe buffer cannot stall the child.
-    let drain = |mut pipe: Box<dyn Read + Send>| {
-        std::thread::spawn(move || {
-            let mut buf = String::new();
-            let _ = pipe.read_to_string(&mut buf);
-            buf
-        })
-    };
+    let tree = ProcessTree::contain(&child);
     let (Some(stdout), Some(stderr)) = (child.stdout.take(), child.stderr.take()) else {
-        kill_tree(&mut child);
+        tree.kill(&mut child);
         return Err("Could not capture hyperfine's output".to_string());
     };
-    let out_h = drain(Box::new(stdout));
-    let err_h = drain(Box::new(stderr));
+    let out_h = Drain::start(stdout);
+    let err_h = Drain::start(stderr);
 
     let started = Instant::now();
     let mut cancelled = false;
@@ -124,12 +139,12 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
         match child.try_wait() {
             Ok(Some(status)) => break (Some(status), false),
             Ok(None) if job.cancel.is_some_and(|c| c.load(Ordering::SeqCst)) => {
-                kill_tree(&mut child);
+                tree.kill(&mut child);
                 cancelled = true;
                 break (None, false);
             }
             Ok(None) if started.elapsed() >= job.timeout => {
-                kill_tree(&mut child);
+                tree.kill(&mut child);
                 break (None, true);
             }
             Ok(None) => std::thread::sleep(Duration::from_millis(50)),
@@ -137,8 +152,9 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
         }
     };
 
-    let stdout = out_h.join().unwrap_or_default();
-    let stderr = err_h.join().unwrap_or_default();
+    let drain_deadline = Instant::now() + DRAIN_GRACE;
+    let stdout = out_h.finish(drain_deadline);
+    let stderr = err_h.finish(drain_deadline);
     let json = std::fs::read_to_string(&json_path).ok();
     let _ = std::fs::remove_file(&json_path);
 
@@ -151,3 +167,6 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
         cancelled,
     })
 }
+
+#[cfg(test)]
+mod tests;
