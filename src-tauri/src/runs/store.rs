@@ -89,6 +89,21 @@ pub(super) fn get_run(conn: &Connection, id: &str) -> Result<RunDetail, String> 
     .ok_or_else(|| "Run not found.".to_string())
 }
 
+/// How long the suite's completed runs took, in seconds, newest first.
+pub fn run_durations(conn: &Connection, suite_id: &str, limit: i64) -> Result<Vec<f64>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT (julianday(finished_at) - julianday(started_at)) * 86400.0 FROM runs
+             WHERE suite_id = ?1 AND status = 'completed'
+             ORDER BY started_at DESC LIMIT ?2",
+        )
+        .map_err(sql_err)?;
+    stmt.query_map(params![suite_id, limit.clamp(1, 100)], |r| r.get(0))
+        .map_err(sql_err)?
+        .collect::<Result<_, _>>()
+        .map_err(sql_err)
+}
+
 pub fn list_runs(
     conn: &Connection,
     suite_id: Option<&str>,

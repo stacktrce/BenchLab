@@ -73,6 +73,7 @@ pub fn run() {
             runs::commands::list_runs,
             runs::commands::get_run,
             runs::commands::get_run_logs,
+            runs::commands::suite_run_durations,
             runs::commands::case_series,
             runs::commands::case_names,
             demo::load_demo,

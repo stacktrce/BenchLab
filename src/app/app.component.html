@@ -47,9 +47,24 @@
 
     <div class="grow-space"></div>
     @if (active.current(); as run) {
-      <div class="active-run" role="status">
+      <div class="active-run">
         <span class="dot running"></span>
-        <span class="grow" [title]="run.label">Running {{ run.label }}</span>
+        <div class="grow">
+          <!-- Only the run and its current case are announced; the clock below ticks every second. -->
+          <div role="status">
+            <div class="label" [title]="run.label">Running {{ run.label }}</div>
+            @if (progress(); as p) {
+              @if (p.suiteId === run.suiteId) {
+                <div class="progress" [title]="p.step">{{ p.step }}</div>
+              }
+            }
+          </div>
+          @if (progress(); as p) {
+            @if (p.suiteId === run.suiteId) {
+              <div class="progress">{{ p.elapsed }}@if (p.left) { · {{ p.left }}}</div>
+            }
+          }
+        </div>
         <button type="button" class="quiet" (click)="cancelActive()">Cancel</button>
       </div>
     }

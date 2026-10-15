@@ -6,6 +6,7 @@ import { BenchmarkRunnerService } from "./core/benchmark-runner.service";
 import { errorMessage } from "./core/errors";
 import { ToolInfo } from "./core/parser/hyperfine.types";
 import { SuiteApiService } from "./core/suite-api.service";
+import { RunProgressService } from "./core/run-progress.service";
 import { ThemeService } from "./core/theme.service";
 import { ToastService } from "./core/toast.service";
 import { IconComponent } from "./shared/icon/icon.component";
@@ -20,6 +21,7 @@ export class AppComponent {
   protected readonly api = inject(SuiteApiService);
   protected readonly toast = inject(ToastService);
   protected readonly active = inject(ActiveRunService);
+  protected readonly progress = inject(RunProgressService).view;
   protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly runner = inject(BenchmarkRunnerService);

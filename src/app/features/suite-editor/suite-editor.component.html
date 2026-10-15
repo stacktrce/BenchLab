@@ -40,6 +40,10 @@
       </div>
     </div>
 
+    @if (liveProgress(); as p) {
+      <p class="live">{{ p.step }} · {{ p.elapsed }} elapsed@if (p.left) { · {{ p.left }}}</p>
+    }
+
     @if (problems().length) {
       <div class="note error" role="alert">
         @for (p of problems(); track $index) {

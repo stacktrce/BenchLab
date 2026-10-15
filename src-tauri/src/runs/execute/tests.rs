@@ -1,4 +1,5 @@
 use super::*;
+use crate::runs::events::VecSink;
 use crate::suites::Case;
 use crate::testing::{case, git_available, real_hyperfine, suite};
 
@@ -28,7 +29,7 @@ fn executes_real_hyperfine_per_case_and_isolates_failures() {
             vec![case("good"), named("bad", "exit 3"), disabled, with_hooks],
         )
     };
-    let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
+    let out = execute_suite(&hf, &suite, &AtomicBool::new(false), &VecSink::default());
     assert_eq!(out.case_count, 3);
     assert_eq!(out.status(), "partial");
     let names: Vec<_> = out
@@ -82,7 +83,7 @@ fn cancelling_stops_the_whole_process_tree_quickly() {
         flag.store(true, Ordering::SeqCst);
     });
     let started = std::time::Instant::now();
-    let out = execute_suite(&hf, &suite, &cancel);
+    let out = execute_suite(&hf, &suite, &cancel, &VecSink::default());
     canceller.join().unwrap();
 
     assert!(
@@ -161,7 +162,7 @@ fn a_suite_run_records_the_git_state_of_its_working_directories() {
             ],
         )
     };
-    let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
+    let out = execute_suite(&hf, &suite, &AtomicBool::new(false), &VecSink::default());
     assert_eq!(out.status(), "completed");
     assert_eq!(out.git.len(), 1);
     assert_eq!(out.git[0].commit, head.trim());
@@ -187,7 +188,7 @@ fn option_like_names_and_hooks_are_passed_as_values() {
             vec![case("-fast"), case("--runs=99"), case("a=b c"), hooked],
         )
     };
-    let out = execute_suite(&hf, &suite, &AtomicBool::new(false));
+    let out = execute_suite(&hf, &suite, &AtomicBool::new(false), &VecSink::default());
     let names: Vec<_> = out
         .results
         .iter()
