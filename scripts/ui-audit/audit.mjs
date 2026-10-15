@@ -8,7 +8,7 @@
 //
 // Exit code is 1 when any check fails.
 import puppeteer from "puppeteer-core";
-import { ensureServer, findBrowser, stopServer } from "./browser.mjs";
+import { ensureServer, launchBrowser, stopServer } from "./browser.mjs";
 import { auditAxe } from "./checks/axe.mjs";
 import { auditCaseList } from "./checks/case-list.mjs";
 import { auditChartExport } from "./checks/chart-export.mjs";
@@ -22,7 +22,7 @@ import { failureCount } from "./report.mjs";
 const shotsDir = process.argv.includes("--shots") ? process.argv[process.argv.indexOf("--shots") + 1] : undefined;
 
 const server = await ensureServer();
-const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true });
+const browser = await launchBrowser(puppeteer);
 try {
   await auditAxe(browser, { shotsDir });
   await auditDialogKeyboard(browser);

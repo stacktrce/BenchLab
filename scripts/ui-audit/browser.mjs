@@ -19,10 +19,22 @@ const BROWSER_CANDIDATES = [
   "/usr/bin/microsoft-edge",
 ];
 
-export function findBrowser() {
-  const found = BROWSER_CANDIDATES.find((p) => p && existsSync(p));
-  if (!found) throw new Error("No Chrome or Edge found. Set CHROME_PATH to a browser executable.");
-  return found;
+/**
+ * Starts the first installed browser that launches. An installed browser can still fail to start
+ * headless (Edge does while it is updating), so each one is tried before giving up.
+ */
+export async function launchBrowser(puppeteer) {
+  const installed = [...new Set(BROWSER_CANDIDATES.filter((p) => p && existsSync(p)))];
+  if (installed.length === 0) throw new Error("No Chrome or Edge found. Set CHROME_PATH to a browser executable.");
+  const failures = [];
+  for (const executablePath of installed) {
+    try {
+      return await puppeteer.launch({ executablePath, headless: true });
+    } catch (error) {
+      failures.push(`  ${executablePath}: ${String(error.message).split("\n")[0]}`);
+    }
+  }
+  throw new Error(`No browser could be started:\n${failures.join("\n")}\nSet CHROME_PATH to a browser that starts.`);
 }
 
 async function serverIsUp() {
