@@ -96,3 +96,14 @@ export interface RunLog {
   body: string;
   truncated: boolean;
 }
+
+/** One untimed run of a failed case, to see what it printed. Mirrors Rust `DiagnoseResult`. */
+export interface DiagnoseResult {
+  /** The command's own exit code when it ran, else hyperfine's. */
+  exitCode: number | null;
+  timedOut: boolean;
+  cancelled: boolean;
+  durationSeconds: number;
+  output: string;
+  truncated: boolean;
+}

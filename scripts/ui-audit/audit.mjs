@@ -13,6 +13,7 @@ import { auditAxe } from "./checks/axe.mjs";
 import { auditCaseList } from "./checks/case-list.mjs";
 import { auditChartExport } from "./checks/chart-export.mjs";
 import { auditExcelExport } from "./checks/excel-export.mjs";
+import { auditDiagnose } from "./checks/diagnose.mjs";
 import { auditDialogKeyboard } from "./checks/dialog-keyboard.mjs";
 import { auditOverlappingLoads } from "./checks/overlapping-loads.mjs";
 import { auditRunVisibility } from "./checks/run-visibility.mjs";
@@ -35,6 +36,7 @@ try {
   await auditCaseList(browser);
   await auditRunLog(browser);
   await auditProgress(browser);
+  await auditDiagnose(browser);
   await auditTrendPage(browser);
   await auditChartExport(browser);
   await auditExcelExport(browser);

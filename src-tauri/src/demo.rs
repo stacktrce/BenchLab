@@ -331,6 +331,7 @@ mod tests {
                 warmup: Some(0),
                 timeout: std::time::Duration::from_secs(60),
                 cancel: None,
+                show_output: false,
             };
             let out = crate::hyperfine::exec(&hf, &job).unwrap();
             assert_eq!(out.exit_code, Some(0), "{}: {}", case.name, out.stderr);

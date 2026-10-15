@@ -1,0 +1,42 @@
+@if (case()) {
+  <button type="button" class="quiet" (click)="confirming.set(true)" [disabled]="busy()">
+    {{ busy() ? "Running…" : "Run “" + caseName() + "” once and show output" }}
+  </button>
+} @else {
+  <p class="faint">The suite no longer has a case called “{{ caseName() }}”, so it cannot be run again.</p>
+}
+
+@if (error(); as message) {
+  <p class="faint" role="alert">{{ message }}</p>
+}
+@if (result(); as r) {
+  <div class="result">
+    <p class="faint">
+      @if (r.cancelled) {
+        Cancelled.
+      } @else if (r.timedOut) {
+        Stopped after {{ r.durationSeconds.toFixed(0) }} s without finishing.
+      } @else {
+        Exit code {{ r.exitCode ?? "unknown" }} after {{ r.durationSeconds.toFixed(1) }} s. Not recorded as a run.
+      }
+      @if (r.truncated) {
+        Output truncated.
+      }
+    </p>
+    @if (output()) {
+      <pre>{{ output() }}</pre>
+    } @else {
+      <p class="faint">The case printed nothing.</p>
+    }
+  </div>
+}
+
+@if (confirming()) {
+  <app-run-confirm
+    [heading]="'Run “' + caseName() + '” once?'"
+    [items]="items()"
+    summary="One untimed run with its setup and cleanup, to show what it prints. It is not recorded as a run."
+    (confirmed)="run()"
+    (cancelled)="confirming.set(false)"
+  />
+}

@@ -59,6 +59,7 @@ pub async fn run_benchmark(
                 warmup: None,
                 timeout,
                 cancel: Some(&cancel),
+                show_output: false,
             },
         )
     })

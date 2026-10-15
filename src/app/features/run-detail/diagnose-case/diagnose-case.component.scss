@@ -1,0 +1,20 @@
+:host {
+  display: block;
+  margin-top: 8px;
+}
+
+.result {
+  margin-top: 8px;
+}
+
+pre {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+}

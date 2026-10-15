@@ -104,6 +104,7 @@ pub fn run() {
             suites::commands::delete_suite,
             suites::commands::set_baseline,
             runs::commands::run_suite,
+            runs::commands::diagnose_case,
             runs::commands::list_runs,
             runs::commands::get_run,
             runs::commands::get_run_logs,

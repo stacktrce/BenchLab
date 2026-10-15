@@ -51,6 +51,11 @@
         @if (logs()?.length) {
           <p><a href="#run-log">Read the log</a> for hyperfine's full output for each case.</p>
         }
+        @if (suite(); as s) {
+          @for (name of failedCases(); track name) {
+            <app-diagnose-case [suite]="s" [caseName]="name" />
+          }
+        }
       </div>
     }
     @if (error(); as err) {
