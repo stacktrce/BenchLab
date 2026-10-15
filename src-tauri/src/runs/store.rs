@@ -21,6 +21,10 @@ pub(super) fn row_to_record(r: &rusqlite::Row) -> rusqlite::Result<RunRecord> {
     })
 }
 
+/// Columns after RECORD_COLUMNS start at this index; queries that read more use it, so adding
+/// a record column cannot shift what they read.
+pub(super) const RECORD_COLUMN_COUNT: usize = 11;
+
 pub(super) const RECORD_COLUMNS: &str = "id, suite_id, suite_name, started_at, finished_at, status,      tool_version, case_count, error, note, tags";
 
 pub(super) fn insert_run(
@@ -74,11 +78,11 @@ pub(super) fn get_run(conn: &Connection, id: &str) -> Result<RunDetail, String> 
         ),
         [id],
         |r| {
-            let config: Option<String> = r.get(10)?;
-            let git: Option<String> = r.get(11)?;
+            let config: Option<String> = r.get(RECORD_COLUMN_COUNT + 1)?;
+            let git: Option<String> = r.get(RECORD_COLUMN_COUNT + 2)?;
             Ok(RunDetail {
                 record: row_to_record(r)?,
-                raw_output: r.get(9)?,
+                raw_output: r.get(RECORD_COLUMN_COUNT)?,
                 config: config.and_then(|c| serde_json::from_str(&c).ok()),
                 git: git
                     .and_then(|g| serde_json::from_str(&g).ok())

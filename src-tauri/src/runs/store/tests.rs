@@ -158,3 +158,9 @@ fn run_durations_are_seconds_of_completed_runs_newest_first() {
     assert!((durations[1] - 90.0).abs() < 0.01, "{durations:?}");
     assert_eq!(run_durations(&conn, &s.id, 1).unwrap().len(), 1);
 }
+
+/// RECORD_COLUMN_COUNT must match RECORD_COLUMNS, or reads after the record shift silently.
+#[test]
+fn the_record_column_count_matches_the_column_list() {
+    assert_eq!(RECORD_COLUMNS.split(',').count(), RECORD_COLUMN_COUNT);
+}

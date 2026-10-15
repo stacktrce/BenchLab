@@ -1,7 +1,7 @@
 //! The history page: searching runs across suites, annotating them and deleting them.
 
 use super::model::RunRecord;
-use super::store::{RECORD_COLUMNS, row_to_record};
+use super::store::{RECORD_COLUMN_COUNT, RECORD_COLUMNS, row_to_record};
 use crate::db::sql_err;
 use crate::git::GitInfo;
 use rusqlite::{Connection, params, params_from_iter};
@@ -110,7 +110,7 @@ pub fn search_runs(
             Ok(HistoryRow {
                 record: row_to_record(r)?,
                 git: r
-                    .get::<_, Option<String>>(11)?
+                    .get::<_, Option<String>>(RECORD_COLUMN_COUNT)?
                     .and_then(|j| serde_json::from_str(&j).ok())
                     .unwrap_or_default(),
             })
