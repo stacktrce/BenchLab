@@ -22,6 +22,17 @@ export const SCREENS = [
   ["trends", "/suites/s1/trends"],
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],
+  [
+    "run-log",
+    "/runs/r2",
+    async (page) => {
+      await page.waitForSelector("#run-log details");
+      await page.evaluate(() => {
+        document.querySelectorAll("#run-log details").forEach((d) => (d.open = true));
+        document.querySelector("#run-log").scrollIntoView();
+      });
+    },
+  ],
   ["run-charts", "/runs/r2/charts"],
   ["compare-charts", "/compare/charts?candidate=r2&baseline=r1", chartCase("regex split")],
   ["confirm", "/suites/s1", clickByText("Run")],

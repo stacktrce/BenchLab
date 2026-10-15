@@ -1,0 +1,46 @@
+@if (logs().length === 0) {
+  <p class="faint">This run was recorded before BenchLab kept logs.</p>
+} @else {
+  <div class="tools">
+    <label class="search">
+      <span class="sr-only">Search the log</span>
+      <input #search type="search" placeholder="Search the log" [value]="query()" (input)="query.set(search.value)" />
+    </label>
+    @if (query().trim()) {
+      <span class="faint" aria-live="polite">{{ matchCount() }} {{ matchCount() === 1 ? "match" : "matches" }}</span>
+    }
+    @if (hasCommandOutput()) {
+      <label>
+        <span class="sr-only">Show</span>
+        <select #picker (change)="setStream(picker.value)">
+          <option value="all">All output</option>
+          <option value="hyperfine">hyperfine only</option>
+          <option value="command">Command output only</option>
+        </select>
+      </label>
+    }
+    <span class="spacer"></span>
+    <button type="button" class="bare" (click)="copy()">Copy</button>
+    <button type="button" class="bare" (click)="save()">Save .txt</button>
+  </div>
+
+  @for (log of shown(); track log.case + log.stream) {
+    <details [open]="failedCases().includes(log.case)">
+      <summary>
+        {{ log.case }}
+        <span class="faint">{{ streamLabel[log.stream] }}</span>
+        @if (failedCases().includes(log.case)) {
+          <span class="status failed">failed</span>
+        }
+        @if (log.truncated) {
+          <span class="faint">· log truncated</span>
+        }
+      </summary>
+      @if (log.parts.length === 0) {
+        <p class="faint">This case printed nothing.</p>
+      } @else {
+        <pre>@for (part of log.parts; track $index) {@if (part.match) {<mark>{{ part.text }}</mark>} @else {<span>{{ part.text }}</span>}}</pre>
+      }
+    </details>
+  }
+}

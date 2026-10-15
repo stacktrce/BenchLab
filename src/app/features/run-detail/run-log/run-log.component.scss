@@ -1,0 +1,49 @@
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search input {
+  width: 240px;
+  max-width: 100%;
+}
+
+.spacer {
+  flex: 1;
+}
+
+details {
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+}
+
+summary {
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+pre {
+  margin: 8px 0 0;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+mark {
+  background: var(--bg-sel);
+  color: var(--ink);
+  outline: 1px solid var(--accent);
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+}

@@ -48,6 +48,9 @@
       <div class="note error" role="alert">
         <p><strong>Some cases did not complete</strong></p>
         <pre>{{ d.record.error }}</pre>
+        @if (logs()?.length) {
+          <p><a href="#run-log">Read the log</a> for hyperfine's full output for each case.</p>
+        }
       </div>
     }
     @if (error(); as err) {
@@ -57,6 +60,12 @@
       <section class="section">
         <header><h2>Results</h2></header>
         <app-results-table [cases]="r.cases" />
+      </section>
+    }
+    @if (logs(); as l) {
+      <section class="section" id="run-log">
+        <header><h2>Log</h2></header>
+        <app-run-log [logs]="l" [failedCases]="failedCases()" [fileBase]="d.record.suiteName" />
       </section>
     }
   } @else if (error(); as err) {
