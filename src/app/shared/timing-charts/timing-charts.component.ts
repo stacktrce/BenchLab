@@ -1,5 +1,7 @@
 import { Component, computed, inject, input, signal } from "@angular/core";
-import { histogramChart, runOrderChart, TimingSeries } from "../../core/charts/chart-configs";
+import { TimingSeries } from "../../core/charts/chart-model";
+import { histogramChart } from "../../core/charts/histogram-chart";
+import { runOrderChart } from "../../core/charts/run-order-chart";
 import { Tone } from "../../core/charts/palette";
 import { ChartPaletteService } from "../../core/chart-palette.service";
 import { CaseResult } from "../../core/parser/hyperfine.types";
