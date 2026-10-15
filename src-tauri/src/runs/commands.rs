@@ -26,6 +26,12 @@ pub async fn run_suite(
     let active = control.begin()?;
     let cancel = active.flag();
 
+    log::info!(
+        "Running suite \"{}\": {} enabled case(s), {} run(s) each",
+        suite.name,
+        suite.cases.iter().filter(|c| c.enabled).count(),
+        suite.runs
+    );
     let sink = TauriSink(app);
     let (suite, tool_version, outcome, sink) = tauri::async_runtime::spawn_blocking(move || {
         let version = hyperfine::tool_version(&hyperfine_path);
@@ -36,6 +42,18 @@ pub async fn run_suite(
     .map_err(|e| format!("Suite run failed: {e}"))?;
 
     let stored = db.with(|c| store::insert_run(c, &suite, &started_at, &tool_version, &outcome));
+    for error in &outcome.errors {
+        log::warn!("Suite \"{}\": {error}", suite.name);
+    }
+    match &stored {
+        Ok(run) => log::info!(
+            "Suite \"{}\" finished: {}, run {}",
+            suite.name,
+            outcome.status(),
+            run.record.id
+        ),
+        Err(e) => log::error!("Suite \"{}\" ran but could not be stored: {e}", suite.name),
+    }
     sink.emit(RunEvent::Finished {
         run_id: stored.as_ref().ok().map(|r| r.record.id.clone()),
         status: outcome.status().to_string(),
