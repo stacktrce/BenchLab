@@ -1,0 +1,41 @@
+<div class="cases">
+  @for (c of controls(); track c; let i = $index) {
+    <div class="case" [formGroup]="c" [class.off]="!c.value.enabled">
+      <span class="index num faint">{{ i + 1 }}</span>
+      <div class="body">
+        <input class="case-name" formControlName="name" placeholder="Case name"
+               [attr.aria-label]="'Name of case ' + (i + 1)" autocomplete="off" />
+        <input class="mono" formControlName="command" placeholder="command to time"
+               [attr.aria-label]="'Command of case ' + (i + 1)" autocomplete="off" spellcheck="false" />
+        <details>
+          <summary>Setup, cleanup, directory and budget</summary>
+          <div class="hooks">
+            <label>Setup <span class="faint">runs once before timing</span>
+              <input class="mono" formControlName="setupCommand" spellcheck="false" />
+            </label>
+            <label>Cleanup <span class="faint">runs after timing</span>
+              <input class="mono" formControlName="cleanupCommand" spellcheck="false" />
+            </label>
+            <label>Working directory
+              <input class="mono" formControlName="workingDirectory" spellcheck="false" />
+            </label>
+            <label>Regression budget, percent slower <span class="faint">optional</span>
+              <input class="num budget" type="number" min="0" step="any" formControlName="budgetPercent" />
+              <span class="faint">Comparisons flag this case only when the data confidently shows it more than this much slower than the baseline.</span>
+            </label>
+          </div>
+        </details>
+      </div>
+      <div class="case-tools">
+        <label class="check" title="Disabled cases are skipped when running">
+          <input type="checkbox" formControlName="enabled" />
+          <span class="faint">on</span>
+        </label>
+        <button type="button" class="bare" (click)="move(i, -1)" [disabled]="i === 0" aria-label="Move up"><app-icon name="up" /></button>
+        <button type="button" class="bare" (click)="move(i, 1)" [disabled]="i === controls().length - 1" aria-label="Move down"><app-icon name="down" /></button>
+        <button type="button" class="bare" (click)="removeCase(i)" aria-label="Remove case"><app-icon name="close" /></button>
+      </div>
+    </div>
+  }
+</div>
+<button type="button" class="quiet add" (click)="addCase()"><app-icon name="plus" /> Add case</button>
