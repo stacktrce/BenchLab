@@ -72,6 +72,11 @@ export class SuiteApiService {
     return invoke<RunDetail>("get_run", { id });
   }
 
+  /** Seconds taken by the suite's last completed runs, newest first. */
+  suiteRunDurations(suiteId: string): Promise<number[]> {
+    return invoke<number[]>("suite_run_durations", { suiteId, limit: 3 });
+  }
+
   /** Per-case logs in the order the cases ran; empty for runs recorded before logs existed. */
   runLogs(runId: string): Promise<RunLog[]> {
     return invoke<RunLog[]>("get_run_logs", { id: runId });

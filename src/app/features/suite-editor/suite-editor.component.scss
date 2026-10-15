@@ -73,3 +73,11 @@
 .dirty {
   margin-top: 8px;
 }
+
+.live {
+  margin: 0 0 16px;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}

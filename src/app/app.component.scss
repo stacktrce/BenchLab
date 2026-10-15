@@ -161,6 +161,22 @@
   font-size: 12px;
 }
 
+.active-run .grow {
+  min-width: 0;
+}
+
+.active-run .label,
+.active-run .progress {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-run .progress {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
 .active-run button {
   padding: 2px 8px;
   font-size: 12px;

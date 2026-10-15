@@ -57,6 +57,16 @@ pub fn get_run(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
     db.with(|c| store::get_run(c, &id))
 }
 
+/// Seconds taken by the suite's last completed runs, newest first, for estimating time left.
+#[tauri::command]
+pub fn suite_run_durations(
+    db: State<'_, Db>,
+    suite_id: String,
+    limit: Option<i64>,
+) -> Result<Vec<f64>, String> {
+    db.with(|c| store::run_durations(c, &suite_id, limit.unwrap_or(3)))
+}
+
 /// The run's per-case logs, in the order the cases ran; empty for runs from before logs existed.
 #[tauri::command]
 pub fn get_run_logs(db: State<'_, Db>, id: String) -> Result<Vec<LogChunk>, String> {

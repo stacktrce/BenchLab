@@ -5,6 +5,7 @@ import { ActiveRunService } from "../../core/active-run.service";
 import { errorMessage } from "../../core/errors";
 import { Latest } from "../../core/latest";
 import { RunRecord, Suite } from "../../core/models";
+import { RunProgressService } from "../../core/run-progress.service";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
@@ -39,6 +40,7 @@ export class SuiteEditorComponent {
   private readonly toast = inject(ToastService);
   private readonly latestLoad = new Latest();
   private readonly activeRun = inject(ActiveRunService);
+  private readonly progress = inject(RunProgressService);
   private destroyed = false;
 
   readonly form = createSuiteForm(this.fb);
@@ -52,6 +54,11 @@ export class SuiteEditorComponent {
   readonly running = computed(() => {
     const suite = this.saved();
     return !!suite && this.activeRun.current()?.suiteId === suite.id;
+  });
+  /** Progress of this suite's run, shown on its page as well as in the sidebar. */
+  protected readonly liveProgress = computed(() => {
+    const p = this.progress.view();
+    return p && this.running() && p.suiteId === this.saved()?.id ? p : null;
   });
   readonly confirmingRun = signal(false);
   readonly confirmingDelete = signal(false);

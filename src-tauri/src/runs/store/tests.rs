@@ -121,3 +121,40 @@ fn run_keeps_suite_name_snapshot_after_rename() {
         "S"
     );
 }
+
+#[test]
+fn run_durations_are_seconds_of_completed_runs_newest_first() {
+    let conn = memory();
+    let s = saved_suite(&conn);
+    let add = |id: &str, started: &str, finished: &str, status: &str| {
+        conn.execute(
+            "INSERT INTO runs (id, suite_id, suite_name, started_at, finished_at, status, tool_version, case_count)
+             VALUES (?1, ?2, 'S', ?3, ?4, ?5, 'h', 1)",
+            rusqlite::params![id, s.id, started, finished, status],
+        )
+        .unwrap();
+    };
+    add(
+        "old",
+        "2026-01-01T10:00:00.000Z",
+        "2026-01-01T10:01:30.000Z",
+        "completed",
+    );
+    add(
+        "new",
+        "2026-01-02T10:00:00.000Z",
+        "2026-01-02T10:00:20.500Z",
+        "completed",
+    );
+    add(
+        "failed",
+        "2026-01-03T10:00:00.000Z",
+        "2026-01-03T10:00:01.000Z",
+        "failed",
+    );
+    let durations = run_durations(&conn, &s.id, 10).unwrap();
+    assert_eq!(durations.len(), 2);
+    assert!((durations[0] - 20.5).abs() < 0.01, "{durations:?}");
+    assert!((durations[1] - 90.0).abs() < 0.01, "{durations:?}");
+    assert_eq!(run_durations(&conn, &s.id, 1).unwrap().len(), 1);
+}

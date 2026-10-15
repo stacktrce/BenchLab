@@ -108,8 +108,20 @@ export function tauriMock({ empty, slow = false }) {
   // A suite run that stays "in progress" until cancelled (or 8 s), like a long benchmark.
   let finishRun = null;
 
+  // Tauri events: listen() registers a callback through transformCallback, and the mock calls it
+  // the way the backend's emit would.
+  const callbacks = new Map();
+  const listeners = [];
+  const emit = (event, payload) =>
+    listeners.filter((l) => l.event === event).forEach((l) => callbacks.get(l.handler)?.({ event, id: l.id, payload }));
+  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => {} };
+
   window.__TAURI_INTERNALS__ = {
-    transformCallback: () => 1,
+    transformCallback: (callback) => {
+      const id = callbacks.size + 1;
+      callbacks.set(id, callback);
+      return id;
+    },
     invoke: async (command, args) => {
       calls.push({ command, args });
       switch (command) {
@@ -122,11 +134,27 @@ export function tauriMock({ empty, slow = false }) {
         case "get_suite":
           if (args.id === "s2") return second;
           return slow ? later(suite, 800, "get_suite:s1") : suite;
-        case "run_suite":
+        case "run_suite": {
+          const progress = (payload) => emit("run-progress", payload);
+          progress({ type: "started", suiteId: args.suiteId, total: 4 });
+          progress({ type: "caseStarted", index: 0, total: 4, name: "concat with +=" });
+          progress({ type: "caseFinished", index: 0, ok: true, message: null });
+          progress({ type: "caseStarted", index: 1, total: 4, name: "array join" });
           return new Promise((resolve) => {
-            finishRun = () => resolve(runs.r2);
+            finishRun = () => {
+              progress({ type: "finished", runId: "r2", status: "completed" });
+              resolve(runs.r2);
+            };
             setTimeout(finishRun, 8000);
           });
+        }
+        case "suite_run_durations":
+          return [40, 44, 46];
+        case "plugin:event|listen":
+          listeners.push({ event: args.event, handler: args.handler, id: listeners.length + 1 });
+          return listeners.length;
+        case "plugin:event|unlisten":
+          return null;
         case "cancel_run":
           finishRun?.();
           return true;
