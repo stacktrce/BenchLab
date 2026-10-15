@@ -1,23 +1,30 @@
-import { Injectable, signal } from "@angular/core";
+import { computed, Injectable, signal } from "@angular/core";
+import { effectiveTheme, Theme, toggledTheme } from "./theme";
 
-export type Theme = "system" | "light" | "dark";
 const KEY = "benchlab.theme";
-const ORDER: Theme[] = ["system", "light", "dark"];
+const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 @Injectable({ providedIn: "root" })
 export class ThemeService {
   readonly theme = signal<Theme>(this.read());
+  private readonly systemDark = signal(matchMedia(DARK_QUERY).matches);
+  /** The theme on screen, with "system" resolved. */
+  readonly effective = computed(() => effectiveTheme(this.theme(), this.systemDark()));
 
   constructor() {
     this.apply(this.theme());
+    matchMedia(DARK_QUERY).addEventListener("change", (e) => this.systemDark.set(e.matches));
   }
 
-  cycle(): void {
-    const next = ORDER[(ORDER.indexOf(this.theme()) + 1) % ORDER.length];
-    this.theme.set(next);
-    this.apply(next);
+  toggle(): void {
+    this.set(toggledTheme(this.theme(), this.systemDark()));
+  }
+
+  set(theme: Theme): void {
+    this.apply(theme);
+    this.theme.set(theme);
     try {
-      localStorage.setItem(KEY, next);
+      localStorage.setItem(KEY, theme);
     } catch {
       /* storage unavailable: theme still applies for this session */
     }

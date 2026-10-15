@@ -27,7 +27,10 @@ export class AppComponent {
   protected readonly tool = signal<ToolInfo | null>(null);
   protected readonly toolError = signal<string | null>(null);
 
-  protected readonly themeIcon = computed(() => (this.themeService.theme() === "dark" ? "moon" : "sun"));
+  protected readonly themeIcon = computed(() => (this.themeService.effective() === "dark" ? "moon" : "sun"));
+  protected readonly themeLabel = computed(() =>
+    this.themeService.effective() === "dark" ? "Switch to the light theme" : "Switch to the dark theme",
+  );
 
   constructor() {
     this.runner

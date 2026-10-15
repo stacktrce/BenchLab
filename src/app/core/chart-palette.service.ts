@@ -11,11 +11,9 @@ export class ChartPaletteService {
   constructor() {
     // Effects run after ThemeService has applied the new theme attribute, so the variables are current.
     effect(() => {
-      this.theme.theme();
+      this.theme.effective();
       this.palette.set(readPalette());
     });
-    // "System" follows the OS, which changes without the theme signal changing.
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => this.palette.set(readPalette()));
   }
 }
 
