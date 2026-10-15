@@ -1,7 +1,7 @@
 import { Component, inject, input, viewChild } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import type { ChartConfiguration } from "chart.js";
-import { ChartModel } from "../../core/charts/chart-configs";
+import { ChartModel } from "../../core/charts/chart-model";
 import { ChartPaletteService } from "../../core/chart-palette.service";
 import { errorMessage } from "../../core/errors";
 import { exportFileName, FileExportService } from "../../core/file-export.service";

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from "@
 import { Router, RouterLink } from "@angular/router";
 import type { ActiveElement } from "chart.js";
 import { ChartPaletteService } from "../../core/chart-palette.service";
-import { trendChart } from "../../core/charts/chart-configs";
+import { trendChart } from "../../core/charts/trend-chart";
 import { thin, trendPoints } from "../../core/charts/trend";
 import { errorMessage } from "../../core/errors";
 import { Latest } from "../../core/latest";
