@@ -52,7 +52,7 @@ export class BenchmarkRunnerService {
     if (output.exitCode !== 0 || output.json === null) {
       return {
         kind: "error",
-        message: `hyperfine exited with code ${output.exitCode ?? "unknown"}.`,
+        message: output.failure ?? "hyperfine produced no results.",
         output,
       };
     }

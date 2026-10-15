@@ -18,6 +18,8 @@ pub struct RunOutput {
     pub json: Option<String>,
     pub timed_out: bool,
     pub cancelled: bool,
+    /// Why hyperfine failed, in words a user can act on; None when it succeeded or was stopped.
+    pub failure: Option<String>,
 }
 
 pub struct Job<'a> {
@@ -160,13 +162,17 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
     let json = std::fs::read_to_string(&json_path).ok();
     let _ = std::fs::remove_file(&json_path);
 
+    let exit_code = status.and_then(|s| s.code());
+    let failure = (!timed_out && !cancelled && exit_code != Some(0))
+        .then(|| super::explain_failure(&stderr, exit_code));
     Ok(RunOutput {
         stdout,
         stderr,
-        exit_code: status.and_then(|s| s.code()),
+        exit_code,
         json,
         timed_out,
         cancelled,
+        failure,
     })
 }
 

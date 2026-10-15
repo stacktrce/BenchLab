@@ -41,6 +41,8 @@ export interface RunOutput {
   json: string | null;
   timedOut: boolean;
   cancelled: boolean;
+  /** Why hyperfine failed, worded for the user; null when it succeeded or was stopped. */
+  failure: string | null;
 }
 
 /** Which hyperfine BenchLab found and where it came from. */

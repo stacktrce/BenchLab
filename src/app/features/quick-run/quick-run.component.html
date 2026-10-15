@@ -49,9 +49,13 @@
       <div class="note error" role="alert">
         <p><strong>{{ o.message }}</strong></p>
         @if (o.output; as out) {
-          <p class="muted">Exit code {{ out.exitCode ?? "none" }}</p>
-          @if (out.stdout) { <pre>{{ out.stdout }}</pre> }
-          @if (out.stderr) { <pre>{{ out.stderr }}</pre> }
+          @if (out.stdout || out.stderr) {
+            <details>
+              <summary>hyperfine's output (exit code {{ out.exitCode ?? "none" }})</summary>
+              @if (out.stdout) { <pre>{{ out.stdout }}</pre> }
+              @if (out.stderr) { <pre>{{ out.stderr }}</pre> }
+            </details>
+          }
         }
       </div>
     }

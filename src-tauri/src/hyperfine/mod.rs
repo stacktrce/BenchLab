@@ -3,10 +3,12 @@
 
 pub mod commands;
 mod control;
+mod failure;
 mod locate;
 mod process;
 mod tree;
 
 pub use control::RunControl;
+pub use failure::explain_failure;
 pub use locate::{locate_hyperfine, tool_version};
 pub use process::{Job, exec};
