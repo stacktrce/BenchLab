@@ -80,6 +80,8 @@ BenchLab executes the commands you write, through hyperfine's shell, with your u
 
 Suites and runs live in a SQLite database named `benchlab.db` in the app data folder (on Windows, `%APPDATA%\com.benchlab.main`). The schema is versioned and migrates in place on startup; a database written by a newer BenchLab is refused instead of damaged, and the app says so in a dialog before it exits. Debug builds (`npm run tauri dev`) use `benchlab-dev.db` in the same folder, so developing on a newer schema never locks the installed app out of your data.
 
+The app keeps its own log (starts, runs, failures and uncaught errors) in `benchlab.log`, on Windows in `%LOCALAPPDATA%\com.benchlab.main\logs`, capped at 1 MB. Each run also keeps hyperfine's output per case, shown under Log on the run's page.
+
 ## Develop
 
 Requirements: Node (developed on 26), Rust (stable), and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.

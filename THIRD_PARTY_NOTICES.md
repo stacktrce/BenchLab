@@ -5,7 +5,7 @@ BenchLab bundles or builds on the following. Licence texts for hyperfine ship in
 | Component | Use | Licence |
 |---|---|---|
 | [hyperfine](https://github.com/sharkdp/hyperfine) 1.20.0 | Bundled as a sidecar binary; does all timing | Apache-2.0 OR MIT |
-| [Tauri](https://tauri.app) 2 | Desktop shell | Apache-2.0 OR MIT |
+| [Tauri](https://tauri.app) 2 and its dialog, opener and log plugins | Desktop shell | Apache-2.0 OR MIT |
 | [Angular](https://angular.dev) 22 | Interface | MIT |
 | [rusqlite](https://github.com/rusqlite/rusqlite) with bundled SQLite | Local storage | MIT, SQLite is public domain |
 | [Chart.js](https://www.chartjs.org) 4.5 | Charts | MIT |

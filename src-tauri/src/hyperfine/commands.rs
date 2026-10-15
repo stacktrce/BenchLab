@@ -44,8 +44,9 @@ pub async fn run_benchmark(
     let hyperfine = locate_hyperfine()?;
     let timeout = Duration::from_secs(timeout_secs.unwrap_or(DEFAULT_TIMEOUT_SECS));
     let active = control.begin()?;
+    log::info!("Quick run: {command}");
     let cancel = active.flag();
-    tauri::async_runtime::spawn_blocking(move || {
+    let output = tauri::async_runtime::spawn_blocking(move || {
         exec(
             &hyperfine,
             &Job {
@@ -62,7 +63,14 @@ pub async fn run_benchmark(
         )
     })
     .await
-    .map_err(|e| format!("Benchmark task failed: {e}"))?
+    .map_err(|e| format!("Benchmark task failed: {e}"))?;
+    if let Ok(RunOutput {
+        failure: Some(why), ..
+    }) = &output
+    {
+        log::warn!("Quick run failed: {why}");
+    }
+    output
 }
 
 #[tauri::command]

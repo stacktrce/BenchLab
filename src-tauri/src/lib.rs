@@ -21,6 +21,32 @@ const DATABASE_FILE: &str = if cfg!(debug_assertions) {
     "benchlab.db"
 };
 
+/// The app's own log, in the platform's log folder (on Windows
+/// `%LOCALAPPDATA%\com.benchlab.main\logs`). Debug builds write their own file, as with the database.
+const LOG_FILE: &str = if cfg!(debug_assertions) {
+    "benchlab-dev"
+} else {
+    "benchlab"
+};
+const LOG_MAX_BYTES: u128 = 1_000_000;
+
+fn log_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
+    let mut targets = vec![Target::new(TargetKind::LogDir {
+        file_name: Some(LOG_FILE.into()),
+    })];
+    if cfg!(debug_assertions) {
+        targets.push(Target::new(TargetKind::Stdout));
+    }
+    tauri_plugin_log::Builder::new()
+        .targets(targets)
+        .level(log::LevelFilter::Info)
+        .timezone_strategy(TimezoneStrategy::UseLocal)
+        .max_file_size(LOG_MAX_BYTES)
+        .rotation_strategy(RotationStrategy::KeepOne)
+        .build()
+}
+
 fn open_database(dir: &Path) -> Result<rusqlite::Connection, String> {
     let path = dir.join(DATABASE_FILE);
     let conn = db::open(&path).map_err(|e| {
@@ -38,6 +64,7 @@ Database: {}",
 /// The window never opened and release builds abort on panic without output, so the reason
 /// has to be shown in a native dialog or the app just seems to vanish.
 fn exit_with_startup_error(message: &str) -> ! {
+    log::error!("BenchLab could not start: {message}");
     eprintln!("BenchLab could not start: {message}");
     rfd::MessageDialog::new()
         .set_level(rfd::MessageLevel::Error)
@@ -50,10 +77,17 @@ fn exit_with_startup_error(message: &str) -> ! {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // First, so everything after it, including a failed start, is logged.
+        .plugin(log_plugin())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
+            log::info!(
+                "BenchLab {} starting, database {}",
+                app.package_info().version,
+                dir.join(DATABASE_FILE).display()
+            );
             let conn = open_database(&dir).unwrap_or_else(|e| exit_with_startup_error(&e));
             app.manage(db::Db::new(conn));
             app.manage(hyperfine::RunControl::default());
