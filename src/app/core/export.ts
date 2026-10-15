@@ -3,13 +3,18 @@ import { describeGit, ms, percent, signedMs } from "./format";
 import { GitInfo, RunRecord, Suite } from "./models";
 import { BenchmarkResult } from "./parser/hyperfine.types";
 
-const BUDGET_TEXT = {
+export const BUDGET_TEXT = {
   breach: "over budget",
   within: "within budget",
   unclear: "cannot tell from this data",
 } as const;
 
-const VERDICT_TEXT = { faster: "faster", slower: "slower", inconclusive: "within noise" } as const;
+export const VERDICT_TEXT = { faster: "faster", slower: "slower", inconclusive: "within noise" } as const;
+
+export const METHOD_NOTE =
+  "Δ = candidate − baseline, so negative is faster. A case is called faster or slower only when the " +
+  "95% interval of the difference (Welch-style, from the reported standard deviations and run counts) " +
+  "excludes zero.";
 
 /** Inline code span that survives backticks and pipes inside table cells. */
 function code(text: string): string {
@@ -199,12 +204,7 @@ export function comparisonToMarkdown(
     for (const r of caveats) for (const c of r.caveats) out.push(`- **${cell(r.name)}**: ${c}`);
     out.push("");
   }
-  out.push(
-    "Δ = candidate − baseline, so negative is faster. A case is called faster or slower only when the " +
-      "95% interval of the difference (Welch-style, from the reported standard deviations and run counts) " +
-      "excludes zero.",
-    "",
-  );
+  out.push(METHOD_NOTE, "");
   return out.join("\n");
 }
 

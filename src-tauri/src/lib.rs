@@ -76,6 +76,7 @@ pub fn run() {
             demo::load_demo,
             files::write_text_file,
             files::write_binary_file,
+            files::write_xlsx_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

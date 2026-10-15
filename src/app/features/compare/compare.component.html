@@ -12,6 +12,7 @@
         <button type="button" class="bare" (click)="copyMarkdown()"><app-icon name="copy" /> Copy</button>
         <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
         <button type="button" class="bare" (click)="saveCsv()"><app-icon name="download" /> CSV</button>
+        <button type="button" class="bare" (click)="saveExcel()"><app-icon name="download" /> Excel</button>
         <button type="button" class="quiet" [routerLink]="['/compare/charts']" [queryParams]="chartParams()">
           <app-icon name="chart" /> Charts
         </button>

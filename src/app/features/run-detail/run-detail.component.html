@@ -12,6 +12,7 @@
         </button>
         <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
         <button type="button" class="bare" (click)="saveCsv()" [disabled]="!result()"><app-icon name="download" /> CSV</button>
+        <button type="button" class="bare" (click)="saveExcel()" [disabled]="!result()"><app-icon name="download" /> Excel</button>
         <button type="button" class="bare" (click)="togglePin()" [disabled]="!result()"
                 [title]="result() ? '' : 'This run has no results to compare against'">
           {{ isBaseline() ? "Unpin baseline" : "Pin as baseline" }}
