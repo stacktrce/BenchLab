@@ -3,9 +3,9 @@
     <div class="top">
       <span class="wordmark">BenchLab</span>
       <button
-        type="button" class="bare" (click)="themeService.cycle()"
-        [attr.aria-label]="'Theme: ' + themeService.theme() + '. Click to change.'"
-        [title]="'Theme: ' + themeService.theme()"
+        type="button" class="bare" (click)="themeService.toggle()"
+        [attr.aria-label]="themeLabel()"
+        [title]="themeLabel()"
       >
         <app-icon [name]="themeIcon()" />
       </button>
