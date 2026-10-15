@@ -6,6 +6,7 @@ import { errorMessage } from "../../core/errors";
 import { Latest } from "../../core/latest";
 import { RunRecord, Suite } from "../../core/models";
 import { RunProgressService } from "../../core/run-progress.service";
+import { SettingsService } from "../../core/settings.service";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
@@ -41,6 +42,7 @@ export class SuiteEditorComponent {
   private readonly latestLoad = new Latest();
   private readonly activeRun = inject(ActiveRunService);
   private readonly progress = inject(RunProgressService);
+  private readonly settings = inject(SettingsService);
   private destroyed = false;
 
   readonly form = createSuiteForm(this.fb);
@@ -86,7 +88,8 @@ export class SuiteEditorComponent {
     if (!id) {
       this.saved.set(null);
       this.runs.set([]);
-      fillSuiteForm(this.form, this.fb, { name: "", description: "", runs: 10, warmup: 1, cases: [{}] });
+      const { defaultRuns, defaultWarmup } = this.settings.settings();
+      fillSuiteForm(this.form, this.fb, { name: "", description: "", runs: defaultRuns, warmup: defaultWarmup, cases: [{}] });
       this.form.markAsPristine();
       return;
     }

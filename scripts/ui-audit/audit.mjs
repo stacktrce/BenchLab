@@ -19,6 +19,7 @@ import { auditDialogKeyboard } from "./checks/dialog-keyboard.mjs";
 import { auditOverlappingLoads } from "./checks/overlapping-loads.mjs";
 import { auditRunVisibility } from "./checks/run-visibility.mjs";
 import { auditTabOrder } from "./checks/tab-order.mjs";
+import { auditSettings } from "./checks/settings.mjs";
 import { auditThemeToggle } from "./checks/theme-toggle.mjs";
 import { auditProgress } from "./checks/progress.mjs";
 import { auditRunLog } from "./checks/run-log.mjs";
@@ -39,6 +40,7 @@ try {
   await auditProgress(browser);
   await auditDiagnose(browser);
   await auditHistory(browser);
+  await auditSettings(browser);
   await auditTrendPage(browser);
   await auditChartExport(browser);
   await auditExcelExport(browser);

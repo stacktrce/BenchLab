@@ -1,17 +1,20 @@
 import { effect, inject, Service, signal } from "@angular/core";
 import { ChartPalette } from "./charts/palette";
+import { SettingsService } from "./settings.service";
 import { ThemeService } from "./theme.service";
 
 /** The theme's colours as concrete values for canvas charts, updated whenever the theme changes. */
 @Service()
 export class ChartPaletteService {
   private readonly theme = inject(ThemeService);
+  private readonly settings = inject(SettingsService);
   readonly palette = signal<ChartPalette>(readPalette());
 
   constructor() {
     // Effects run after ThemeService has applied the new theme attribute, so the variables are current.
     effect(() => {
       this.theme.effective();
+      this.settings.applied();
       this.palette.set(readPalette());
     });
   }

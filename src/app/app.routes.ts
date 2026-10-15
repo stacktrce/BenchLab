@@ -33,6 +33,10 @@ export const routes: Routes = [
       import("./features/run-detail/run-detail.component").then((m) => m.RunDetailComponent),
   },
   {
+    path: "settings",
+    loadComponent: () => import("./features/settings/settings.component").then((m) => m.SettingsComponent),
+  },
+  {
     path: "history",
     loadComponent: () => import("./features/history/history.component").then((m) => m.HistoryComponent),
   },

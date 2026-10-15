@@ -118,9 +118,29 @@ pub fn run() {
             files::write_text_file,
             files::write_binary_file,
             files::write_xlsx_file,
+            app_paths,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Where BenchLab keeps its files, for the Settings page.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AppPaths {
+    database: String,
+    log: String,
+}
+
+#[tauri::command]
+fn app_paths(app: tauri::AppHandle) -> Result<AppPaths, String> {
+    let paths = app.path();
+    let data = paths.app_data_dir().map_err(|e| e.to_string())?;
+    let logs = paths.app_log_dir().map_err(|e| e.to_string())?;
+    Ok(AppPaths {
+        database: data.join(DATABASE_FILE).display().to_string(),
+        log: logs.join(format!("{LOG_FILE}.log")).display().to_string(),
+    })
 }
 
 #[cfg(test)]

@@ -1,0 +1,79 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs"><h1>Settings</h1></div>
+  </div>
+
+  <section class="section">
+    <header><h2>Appearance</h2></header>
+
+    <fieldset>
+      <legend>Theme</legend>
+      @for (t of themes; track t.id) {
+        <label class="choice">
+          <input type="radio" name="theme" [checked]="theme.theme() === t.id" (change)="theme.set(t.id)" />
+          {{ t.name }}
+        </label>
+      }
+    </fieldset>
+
+    <fieldset>
+      <legend>Accent <span class="faint">used for Run, focus and the candidate in charts</span></legend>
+      @for (a of accents; track a.id) {
+        <label class="choice">
+          <input type="radio" name="accent" [checked]="settings.settings().accent === a.id"
+                 (change)="settings.update({ accent: a.id })" />
+          <span class="swatch" [style.background]="swatch(a.id)"></span>
+          {{ a.name }}
+        </label>
+      }
+    </fieldset>
+
+    <fieldset>
+      <legend>Text size</legend>
+      @for (s of textSizes; track s.id) {
+        <label class="choice">
+          <input type="radio" name="text-size" [checked]="settings.settings().textSize === s.id"
+                 (change)="settings.update({ textSize: s.id })" />
+          {{ s.name }}
+        </label>
+      }
+    </fieldset>
+  </section>
+
+  <section class="section">
+    <header><h2>New suites</h2></header>
+    <div class="numbers">
+      <label>
+        Timed runs per case
+        <input #runs class="num narrow" type="number" min="1" [value]="settings.settings().defaultRuns"
+               (change)="setCount('defaultRuns', runs.value)" />
+      </label>
+      <label>
+        Warm-up runs
+        <input #warmup class="num narrow" type="number" min="0" [value]="settings.settings().defaultWarmup"
+               (change)="setCount('defaultWarmup', warmup.value)" />
+      </label>
+    </div>
+    <p class="faint">Existing suites keep their own numbers.</p>
+  </section>
+
+  <section class="section">
+    <header><h2>Files</h2></header>
+    @if (paths(); as p) {
+      <dl>
+        <dt>Database</dt>
+        <dd>
+          <span class="mono">{{ p.database }}</span>
+          <button type="button" class="bare" (click)="reveal(p.database)">Show in folder</button>
+        </dd>
+        <dt>Log</dt>
+        <dd>
+          <span class="mono">{{ p.log }}</span>
+          <button type="button" class="bare" (click)="reveal(p.log)">Show in folder</button>
+        </dd>
+      </dl>
+    } @else {
+      <p class="faint">File locations are shown in the desktop app.</p>
+    }
+  </section>
+</div>

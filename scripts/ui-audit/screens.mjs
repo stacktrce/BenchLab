@@ -21,6 +21,7 @@ export const SCREENS = [
   ["history", "/suites/s1", clickByText("History", "[role=tab]")],
   ["trends", "/suites/s1/trends"],
   ["all-history", "/history"],
+  ["settings", "/settings"],
   ["all-history-empty", "/history", null, true],
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],

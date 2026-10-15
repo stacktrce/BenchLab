@@ -185,6 +185,11 @@ export function tauriMock({ empty, slow = false }) {
         }
         case "delete_runs":
           return args.ids.length;
+        case "app_paths":
+          return {
+            database: String.raw`C:\Users\you\AppData\Roaming\com.benchlab.main\benchlab.db`,
+            log: String.raw`C:\Users\you\AppData\Local\com.benchlab.main\logs\benchlab.log`,
+          };
         case "suite_run_durations":
           return [40, 44, 46];
         case "plugin:event|listen":
