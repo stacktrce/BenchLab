@@ -1,4 +1,5 @@
 use crate::git::GitInfo;
+use crate::logs::LogChunk;
 use crate::suites::Suite;
 use serde::Serialize;
 
@@ -34,6 +35,7 @@ pub struct SuiteOutcome {
     pub errors: Vec<String>,
     pub case_count: i64,
     pub git: Vec<GitInfo>,
+    pub logs: Vec<LogChunk>,
 }
 
 pub(super) const CANCELLED_MESSAGE: &str = "Cancelled by user. Remaining cases were not run.";

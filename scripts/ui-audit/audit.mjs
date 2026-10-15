@@ -18,6 +18,7 @@ import { auditOverlappingLoads } from "./checks/overlapping-loads.mjs";
 import { auditRunVisibility } from "./checks/run-visibility.mjs";
 import { auditTabOrder } from "./checks/tab-order.mjs";
 import { auditThemeToggle } from "./checks/theme-toggle.mjs";
+import { auditRunLog } from "./checks/run-log.mjs";
 import { auditTrendPage } from "./checks/trend-page.mjs";
 import { failureCount } from "./report.mjs";
 
@@ -31,6 +32,7 @@ try {
   await auditTabOrder(browser);
   await auditThemeToggle(browser);
   await auditCaseList(browser);
+  await auditRunLog(browser);
   await auditTrendPage(browser);
   await auditChartExport(browser);
   await auditExcelExport(browser);

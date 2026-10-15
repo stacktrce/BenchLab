@@ -6,7 +6,7 @@ import { exportFileName, FileExportService } from "../../core/file-export.servic
 import { Latest } from "../../core/latest";
 import { runToCsv, runToMarkdown } from "../../core/export";
 import { describeGit } from "../../core/format";
-import { RunDetail, Suite } from "../../core/models";
+import { RunDetail, RunLog, Suite } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
 import { runToWorkbook } from "../../core/spreadsheet";
@@ -14,10 +14,11 @@ import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon/icon.component";
 import { ResultsTableComponent } from "../../shared/results-table/results-table.component";
+import { RunLogComponent } from "./run-log/run-log.component";
 
 @Component({
   selector: "app-run-detail",
-  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent],
+  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent, RunLogComponent],
   templateUrl: "./run-detail.component.html",
   styleUrl: "./run-detail.component.scss",
 })
@@ -35,6 +36,11 @@ export class RunDetailComponent {
   readonly result = signal<BenchmarkResult | null>(null);
   readonly error = signal<string | null>(null);
   private readonly suite = signal<Suite | null>(null);
+  protected readonly logs = signal<RunLog[] | null>(null);
+  /** Case names from the error lines, which read `"name": why`. */
+  protected readonly failedCases = computed(() =>
+    [...(this.detail()?.record.error ?? "").matchAll(/^"(.*)": /gm)].map((m) => m[1]),
+  );
 
   readonly isBaseline = computed(() => {
     const d = this.detail();
@@ -54,10 +60,15 @@ export class RunDetailComponent {
     this.result.set(null);
     this.error.set(null);
     this.suite.set(null);
+    this.logs.set(null);
     try {
       const detail = await this.api.getRun(id);
       if (!isCurrent()) return;
       this.detail.set(detail);
+      this.api.runLogs(id).then(
+        (logs) => isCurrent() && this.logs.set(logs),
+        () => isCurrent() && this.logs.set([]),
+      );
       this.api.getSuite(detail.record.suiteId).then(
         (s) => isCurrent() && this.suite.set(s),
         () => undefined,

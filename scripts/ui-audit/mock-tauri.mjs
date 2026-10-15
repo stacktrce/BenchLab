@@ -76,6 +76,23 @@ export function tauriMock({ empty, slow = false }) {
       };
     });
 
+  // hyperfine's report per case. In r2 one log was cut at a cap, and one carries markup that
+  // must render as text, never as HTML.
+  const report = (name, mean) =>
+    `Benchmark 1: ${name}
+  Time (mean ± σ):     ${mean} ms ±   1.2 ms    [User: 0.0 ms, System: 0.0 ms]
+  Range (min … max):   ${mean - 2} ms … ${mean + 3} ms    10 runs`;
+  const logs = {
+    r1: baseline.map((b) => ({ case: b.command, stream: "hyperfine", body: report(b.command, 42), truncated: false })),
+    r2: [
+      { case: "concat with +=", stream: "hyperfine", body: report("concat with +=", 41), truncated: false },
+      { case: "array join", stream: "hyperfine", body: report("array join", 24), truncated: false },
+      { case: "template literal", stream: "hyperfine", body: `${report("template literal", 36)}
+<img src=x onerror="window.__xss = true">`, truncated: false },
+      { case: "regex split", stream: "hyperfine", body: report("regex split", 54), truncated: true },
+    ],
+  };
+
   const second = { ...suite, id: "s2", name: "Second suite", cases: [suite.cases[0]] };
   // Every call is recorded so the audit can wait for what it depends on. `later` answers late and
   // records when the answer is delivered, as "delivered:<label>".
@@ -119,6 +136,8 @@ export function tauriMock({ empty, slow = false }) {
         case "write_binary_file":
         case "write_xlsx_file":
           return null;
+        case "get_run_logs":
+          return logs[args.id] ?? [];
         case "case_names":
           return empty ? [] : baseline.map((b) => b.command);
         case "case_series":

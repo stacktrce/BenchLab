@@ -44,6 +44,18 @@ fn executes_real_hyperfine_per_case_and_isolates_failures() {
         "{:?}",
         out.errors
     );
+    let logged: Vec<_> = out.logs.iter().map(|l| l.case.as_str()).collect();
+    assert_eq!(logged, ["good", "bad", "hooks"]);
+    assert!(
+        out.logs[0].body.contains("Benchmark 1: good"),
+        "{}",
+        out.logs[0].body
+    );
+    assert!(
+        out.logs[1].body.contains("non-zero exit code 3"),
+        "{}",
+        out.logs[1].body
+    );
 }
 
 /// Cancelling must return quickly and leave nothing behind.

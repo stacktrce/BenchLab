@@ -87,3 +87,12 @@ export interface RunDetail {
   /** Merged hyperfine JSON for the cases that completed. */
   rawOutput: string | null;
 }
+
+/** One case's log from a run. Bodies are capped; `truncated` says text was cut. */
+export interface RunLog {
+  case: string;
+  /** "hyperfine" is hyperfine's own report; "command" is the benchmarked command's output. */
+  stream: "hyperfine" | "command";
+  body: string;
+  truncated: boolean;
+}

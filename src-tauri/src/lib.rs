@@ -4,6 +4,7 @@ mod demo;
 mod files;
 mod git;
 mod hyperfine;
+mod logs;
 mod runs;
 mod suites;
 #[cfg(test)]
@@ -71,6 +72,7 @@ pub fn run() {
             runs::commands::run_suite,
             runs::commands::list_runs,
             runs::commands::get_run,
+            runs::commands::get_run_logs,
             runs::commands::case_series,
             runs::commands::case_names,
             demo::load_demo,

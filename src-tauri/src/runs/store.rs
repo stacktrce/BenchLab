@@ -60,6 +60,8 @@ pub(super) fn insert_run(
         // next start.
         let _ = index_run(conn, &id, raw);
     }
+    // Logs explain a run but are not the run: losing them must not lose the run.
+    let _ = crate::logs::store_logs(conn, &id, &outcome.logs);
     get_run(conn, &id)
 }
 

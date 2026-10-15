@@ -56,5 +56,6 @@ pub fn outcome(results: usize, errors: usize) -> SuiteOutcome {
         errors: (0..errors).map(|i| format!("e{i}")).collect(),
         case_count: (results + errors) as i64,
         git: Vec::new(),
+        logs: Vec::new(),
     }
 }

@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { ActiveRunService } from "./active-run.service";
-import { CasePoint, RunDetail, RunRecord, Suite, SuiteSummary } from "./models";
+import { CasePoint, RunDetail, RunLog, RunRecord, Suite, SuiteSummary } from "./models";
 
 const RECENT_RUNS = 8;
 
@@ -70,6 +70,11 @@ export class SuiteApiService {
 
   getRun(id: string): Promise<RunDetail> {
     return invoke<RunDetail>("get_run", { id });
+  }
+
+  /** Per-case logs in the order the cases ran; empty for runs recorded before logs existed. */
+  runLogs(runId: string): Promise<RunLog[]> {
+    return invoke<RunLog[]>("get_run_logs", { id: runId });
   }
 
   /** Stops the running suite (or quick run). The partial run is still recorded. */

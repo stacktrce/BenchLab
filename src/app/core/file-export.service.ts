@@ -5,18 +5,18 @@ import { errorMessage } from "./errors";
 import { Workbook } from "./spreadsheet";
 import { ToastService } from "./toast.service";
 
-export function exportFileName(base: string, ext: "md" | "csv" | "png" | "xlsx", date = new Date()): string {
+export function exportFileName(base: string, ext: "md" | "csv" | "txt" | "png" | "xlsx", date = new Date()): string {
   const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "benchlab";
   return `${slug}-${date.toISOString().slice(0, 10)}.${ext}`;
 }
 
-const FILTER_NAMES = { md: "Markdown", csv: "CSV", png: "PNG image", xlsx: "Excel workbook" };
+const FILTER_NAMES = { md: "Markdown", csv: "CSV", txt: "Text", png: "PNG image", xlsx: "Excel workbook" };
 
 @Injectable({ providedIn: "root" })
 export class FileExportService {
   private readonly toast = inject(ToastService);
 
-  async save(defaultName: string, content: string, ext: "md" | "csv"): Promise<void> {
+  async save(defaultName: string, content: string, ext: "md" | "csv" | "txt"): Promise<void> {
     await this.write(defaultName, FILTER_NAMES[ext], ext, (path) => invoke("write_text_file", { path, content }));
   }
 

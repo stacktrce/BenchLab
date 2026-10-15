@@ -69,6 +69,7 @@ fn outcome(specs: &[Spec], seed: u64, git: GitInfo) -> SuiteOutcome {
         errors: Vec::new(),
         case_count: specs.len() as i64,
         git: vec![git],
+        logs: Vec::new(),
     }
 }
 
