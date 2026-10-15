@@ -20,6 +20,8 @@ export const SCREENS = [
   ["suite-hooks", "/suites/s1", (p) => p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)))],
   ["history", "/suites/s1", clickByText("History", "[role=tab]")],
   ["trends", "/suites/s1/trends"],
+  ["all-history", "/history"],
+  ["all-history-empty", "/history", null, true],
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],
   [

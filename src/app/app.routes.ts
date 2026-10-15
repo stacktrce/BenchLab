@@ -33,6 +33,10 @@ export const routes: Routes = [
       import("./features/run-detail/run-detail.component").then((m) => m.RunDetailComponent),
   },
   {
+    path: "history",
+    loadComponent: () => import("./features/history/history.component").then((m) => m.HistoryComponent),
+  },
+  {
     path: "compare/charts",
     loadComponent: () =>
       import("./features/compare-charts/compare-charts.component").then((m) => m.CompareChartsComponent),

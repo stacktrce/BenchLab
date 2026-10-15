@@ -1,0 +1,100 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  .grow {
+    flex: 1 1 100%;
+  }
+
+  input,
+  select {
+    height: 32px;
+  }
+
+  select {
+    max-width: 200px;
+  }
+
+  input[type="date"] {
+    width: 140px;
+  }
+
+  .narrow {
+    width: 100px;
+  }
+}
+
+.started {
+  white-space: nowrap;
+}
+
+tr.picked td {
+  background: var(--bg-sel);
+}
+
+.code {
+  font-size: 12px;
+}
+
+.meta {
+  max-width: 280px;
+}
+
+.note-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 12px;
+}
+
+.tag,
+.edit-button {
+  padding: 0;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  textarea,
+  input {
+    width: 100%;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+}
