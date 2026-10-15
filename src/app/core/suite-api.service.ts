@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { ActiveRunService } from "./active-run.service";
-import { CasePoint, DiagnoseResult, RunDetail, RunLog, RunRecord, Suite, SuiteSummary } from "./models";
+import { CasePoint, DiagnoseResult, HistoryRow, Page, RunDetail, RunFilter, RunLog, RunRecord, Suite, SuiteSummary } from "./models";
 
 const RECENT_RUNS = 8;
 
@@ -70,6 +70,19 @@ export class SuiteApiService {
 
   getRun(id: string): Promise<RunDetail> {
     return invoke<RunDetail>("get_run", { id });
+  }
+
+  searchRuns(filter: RunFilter, limit: number, offset: number): Promise<Page<HistoryRow>> {
+    return invoke<Page<HistoryRow>>("search_runs", { filter, limit, offset });
+  }
+
+  setRunMeta(id: string, note: string | null, tags: string[]): Promise<RunRecord> {
+    return invoke<RunRecord>("set_run_meta", { id, note, tags });
+  }
+
+  /** Deletes runs for good; resolves to how many were deleted. */
+  deleteRuns(ids: string[]): Promise<number> {
+    return invoke<number>("delete_runs", { ids });
   }
 
   /** Runs one case once, untimed, after the user confirmed its commands. Not recorded as a run. */

@@ -2,6 +2,7 @@ pub mod commands;
 mod diagnose;
 mod events;
 mod execute;
+mod history;
 mod model;
 mod series;
 mod store;

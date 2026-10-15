@@ -21,7 +21,7 @@ function hyperfineJson(shift: number): string {
 const record: RunRecord = {
   id: "r", suiteId: "s", suiteName: "Big", startedAt: "2026-01-01T00:00:00.000Z",
   finishedAt: "2026-01-01T00:10:00.000Z", status: "completed", toolVersion: "hyperfine 1.20.0",
-  caseCount: N, error: null,
+  caseCount: N, error: null, note: null, tags: [],
 };
 
 describe(`${N}-case runs`, () => {

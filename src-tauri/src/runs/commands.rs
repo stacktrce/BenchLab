@@ -1,6 +1,7 @@
 use super::diagnose::{DiagnoseResult, diagnose};
 use super::events::{RunEvent, RunSink, TauriSink};
 use super::execute::execute_suite;
+use super::history::{self, HistoryRow, Page, RunFilter};
 use super::model::{RunDetail, RunRecord};
 use super::series::{self, CasePoint};
 use super::store;
@@ -84,6 +85,35 @@ pub async fn diagnose_case(
     tauri::async_runtime::spawn_blocking(move || diagnose(&hyperfine_path, &case, &cancel))
         .await
         .map_err(|e| format!("Diagnosis failed: {e}"))
+}
+
+/// Runs across suites matching `filter`, newest first, one page at a time.
+#[tauri::command]
+pub fn search_runs(
+    db: State<'_, Db>,
+    filter: RunFilter,
+    limit: i64,
+    offset: i64,
+) -> Result<Page<HistoryRow>, String> {
+    db.with(|c| history::search_runs(c, &filter, limit, offset))
+}
+
+#[tauri::command]
+pub fn set_run_meta(
+    db: State<'_, Db>,
+    id: String,
+    note: Option<String>,
+    tags: Vec<String>,
+) -> Result<RunRecord, String> {
+    db.with(|c| history::set_run_meta(c, &id, note.as_deref(), &tags))
+}
+
+/// Deletes runs for good. The frontend asks for confirmation first, naming how many.
+#[tauri::command]
+pub fn delete_runs(db: State<'_, Db>, ids: Vec<String>) -> Result<usize, String> {
+    let deleted = db.with(|c| history::delete_runs(c, &ids))?;
+    log::info!("Deleted {deleted} run(s)");
+    Ok(deleted)
 }
 
 #[tauri::command]

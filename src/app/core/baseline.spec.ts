@@ -3,7 +3,7 @@ import { chooseBaseline } from "./baseline";
 import { RunRecord } from "./models";
 
 const run = (id: string, status: RunRecord["status"] = "completed"): RunRecord => ({
-  id, suiteId: "s", suiteName: "S", startedAt: "", finishedAt: "", status, toolVersion: "v", caseCount: 1, error: null,
+  id, suiteId: "s", suiteName: "S", startedAt: "", finishedAt: "", status, toolVersion: "v", caseCount: 1, error: null, note: null, tags: [],
 });
 
 // newest first, like the backend returns them
