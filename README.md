@@ -35,6 +35,9 @@ The sidebar footer shows which one is in use and its version. Every run records 
 2. **Run.** BenchLab first shows every command, setup, cleanup and directory, and runs nothing until you confirm. You can cancel a running suite; cases already finished are kept.
 3. **Compare.** Open a run and choose Compare. The baseline defaults to the suite's pinned run (pin one from a run's page with Pin as baseline), or to the previous run that has results if none is pinned. Pick any two runs of the suite.
 4. **Charts.** Charts on a run or a comparison opens a page with a histogram of one case's timings and the timings in run order (a cold first run stands out there). Trends on a suite plots one case's mean across its runs, with the 95% band, uncommitted runs and the budget line. Every chart has a Show data table and can be saved as PNG.
+
+   ![Trends for one case](docs/screenshots/light-trends.png)
+
 5. **Export.** Markdown or CSV from a run or a comparison.
 
 **Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing.
