@@ -41,9 +41,10 @@ describe("trendChart", () => {
 
   it("marks uncommitted runs as hollow and the pinned baseline in the accent", () => {
     const chart = trendChart(input([point(1, 0.05), point(2, 0.051, 0.002, true)], "r1"), testPalette);
-    const mean = dataset(chart, "Mean") as { pointBackgroundColor: string[]; pointRadius: number[] };
-    expect(mean.pointBackgroundColor).toEqual([testPalette.accent, testPalette.background]);
-    expect(mean.pointRadius[0]).toBeGreaterThan(mean.pointRadius[1]);
+    const mean = dataset(chart, "Mean");
+    expect(mean?.pointBackgroundColor).toEqual([testPalette.accent, testPalette.background]);
+    const radius = mean?.pointRadius as number[];
+    expect(radius[0]).toBeGreaterThan(radius[1]);
   });
 
   it("draws the budget line at the baseline mean plus the percentage", () => {

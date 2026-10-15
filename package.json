@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "tauri": "node scripts/fetch-hyperfine.mjs && tauri",
-    "test": "vitest run",
+    "test": "tsc -p tsconfig.spec.json && vitest run",
     "lint": "ng lint",
     "fetch:hyperfine": "node scripts/fetch-hyperfine.mjs",
     "audit:ui": "node scripts/ui-audit/audit.mjs"

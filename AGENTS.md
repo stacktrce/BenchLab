@@ -124,7 +124,7 @@ TypeScript (`src/app`): `core/` is framework-free logic with specs (`compare/` i
 Run what your change touches; run everything before you say a branch is ready.
 
 ```sh
-npm test                                        # vitest: parser, compare, export, validation, scale
+npm test                                        # type-checks the specs, then vitest: parser, compare, charts, export, validation
 npx ng build --configuration development        # type-checks templates strictly
 cd src-tauri
 cargo fmt --check
