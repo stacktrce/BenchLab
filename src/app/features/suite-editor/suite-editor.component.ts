@@ -1,6 +1,5 @@
-import { DatePipe } from "@angular/common";
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from "@angular/core";
-import { FormArray, NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
+import { NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
 import { ActiveRunService } from "../../core/active-run.service";
 import { errorMessage } from "../../core/errors";
@@ -12,13 +11,15 @@ import { validateSuite } from "../../core/suite-validation";
 import { IconComponent } from "../../shared/icon/icon.component";
 import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm/run-confirm.component";
 import { confirmItems, confirmSummary } from "./run-confirmation";
-import { createCaseGroup, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
+import { CaseListComponent } from "./case-list/case-list.component";
+import { RunHistoryComponent } from "./run-history/run-history.component";
+import { CaseFormArray, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
 
 type Tab = "cases" | "history";
 
 @Component({
   selector: "app-suite-editor",
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, RunConfirmComponent, IconComponent],
+  imports: [ReactiveFormsModule, RouterLink, RunConfirmComponent, IconComponent, CaseListComponent, RunHistoryComponent],
   templateUrl: "./suite-editor.component.html",
   styleUrl: "./suite-editor.component.scss",
   host: {
@@ -64,7 +65,7 @@ export class SuiteEditorComponent {
     });
   }
 
-  get cases(): FormArray {
+  get cases(): CaseFormArray {
     return this.form.controls.cases;
   }
 
@@ -95,26 +96,6 @@ export class SuiteEditorComponent {
       this.saved.set(null);
       this.loadError.set(errorMessage(e));
     }
-  }
-
-  addCase(): void {
-    this.cases.push(createCaseGroup(this.fb));
-    this.form.markAsDirty();
-    this.tab.set("cases");
-  }
-
-  removeCase(i: number): void {
-    this.cases.removeAt(i);
-    this.form.markAsDirty();
-  }
-
-  move(i: number, delta: -1 | 1): void {
-    const j = i + delta;
-    if (j < 0 || j >= this.cases.length) return;
-    const ctrl = this.cases.at(i);
-    this.cases.removeAt(i);
-    this.cases.insert(j, ctrl);
-    this.form.markAsDirty();
   }
 
   async save(): Promise<void> {

@@ -95,3 +95,5 @@ export function formToDraft(raw: SuiteFormValue, saved: Suite | null): Suite {
     })),
   };
 }
+
+export type CaseFormArray = ReturnType<typeof createSuiteForm>["controls"]["cases"];

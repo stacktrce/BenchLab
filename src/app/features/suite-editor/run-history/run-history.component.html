@@ -1,0 +1,25 @@
+@if (runs().length === 0) {
+  <div class="empty"><strong>No runs yet</strong>Press Run to time this suite.</div>
+} @else {
+  <table>
+    <thead>
+      <tr><th>Started</th><th>Status</th><th class="r">Cases</th><th>Tool</th><th><span class="sr-only">Actions</span></th></tr>
+    </thead>
+    <tbody>
+      @for (r of runs(); track r.id) {
+        <tr>
+          <td>
+            <a [routerLink]="['/runs', r.id]">{{ r.startedAt | date: "MMM d, y, HH:mm" }}</a>
+            @if (r.id === baselineRunId()) {
+              <span class="muted pin">· pinned baseline</span>
+            }
+          </td>
+          <td><span class="status" [class]="r.status">{{ r.status }}</span></td>
+          <td class="r num">{{ r.caseCount }}</td>
+          <td class="muted">{{ r.toolVersion }}</td>
+          <td class="r"><a [routerLink]="['/compare']" [queryParams]="{ candidate: r.id }">Compare</a></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
