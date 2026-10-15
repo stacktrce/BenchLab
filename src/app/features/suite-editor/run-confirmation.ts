@@ -1,5 +1,5 @@
 import { Suite } from "../../core/models";
-import { ConfirmItem } from "../../shared/run-confirm.component";
+import { ConfirmItem } from "../../shared/run-confirm/run-confirm.component";
 
 /** Exactly what the backend will execute: the saved, enabled cases. */
 export function confirmItems(suite: Suite | null): ConfirmItem[] {

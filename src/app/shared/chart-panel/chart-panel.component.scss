@@ -1,0 +1,46 @@
+.panel {
+  margin-top: 24px;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+
+  h2 {
+    margin: 0;
+    margin-right: auto;
+  }
+}
+
+.note-line {
+  margin: 6px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+details {
+  margin-top: 10px;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.scroll {
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 6px;
+}

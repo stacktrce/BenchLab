@@ -11,14 +11,14 @@ import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
-import { IconComponent } from "../../shared/icon.component";
-import { CaseChartsComponent } from "../../shared/charts/case-charts.component";
-import { ResultsTableComponent } from "../../shared/results-table.component";
+import { IconComponent } from "../../shared/icon/icon.component";
+import { ResultsTableComponent } from "../../shared/results-table/results-table.component";
 
 @Component({
   selector: "app-run-detail",
-  imports: [DatePipe, RouterLink, ResultsTableComponent, CaseChartsComponent, IconComponent],
+  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent],
   templateUrl: "./run-detail.component.html",
+  styleUrl: "./run-detail.component.scss",
 })
 export class RunDetailComponent {
   readonly id = input.required<string>();

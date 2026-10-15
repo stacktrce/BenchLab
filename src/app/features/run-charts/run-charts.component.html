@@ -1,0 +1,23 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs">
+      @if (run(); as r) {
+        <a [routerLink]="['/suites', r.record.suiteId]">{{ r.record.suiteName }}</a>
+        <span class="faint">/</span>
+        <a [routerLink]="['/runs', r.record.id]">{{ r.record.startedAt | date: "MMM d, y, HH:mm" }}</a>
+        <span class="faint">/</span>
+      }
+      <h1>Charts</h1>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="note error" role="alert">{{ message }}</div>
+  } @else if (!run()) {
+    <p class="muted">Loading…</p>
+  } @else if (!hasTimings()) {
+    <div class="empty"><strong>Nothing to chart</strong>This run kept no individual timings.</div>
+  } @else {
+    <app-timing-charts [sets]="sets()" />
+  }
+</div>

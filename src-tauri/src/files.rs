@@ -14,8 +14,8 @@ pub fn write_text_file(path: String, content: String) -> Result<(), String> {
         .extension()
         .and_then(|e| e.to_str())
         .map(str::to_ascii_lowercase);
-    if !matches!(ext.as_deref(), Some("md" | "csv" | "txt" | "svg")) {
-        return Err("Only .md, .csv, .svg and .txt exports are allowed.".into());
+    if !matches!(ext.as_deref(), Some("md" | "csv" | "txt")) {
+        return Err("Only .md, .csv and .txt exports are allowed.".into());
     }
     std::fs::write(p, content).map_err(|e| format!("Could not write {path}: {e}"))
 }
@@ -50,14 +50,6 @@ mod tests {
         assert!(write_text_file("out.md".into(), String::new()).is_err());
         let exe = std::env::temp_dir().join("benchlab-test.exe");
         assert!(write_text_file(exe.to_string_lossy().into(), String::new()).is_err());
-    }
-
-    #[test]
-    fn allows_svg_charts_as_text() {
-        let p = std::env::temp_dir().join(format!("benchlab-test-{}.svg", std::process::id()));
-        write_text_file(p.to_string_lossy().into(), "<svg/>".into()).unwrap();
-        assert_eq!(std::fs::read_to_string(&p).unwrap(), "<svg/>");
-        let _ = std::fs::remove_file(p);
     }
 
     fn png_bytes() -> Vec<u8> {

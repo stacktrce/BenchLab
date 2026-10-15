@@ -12,6 +12,9 @@
         <button type="button" class="bare" (click)="copyMarkdown()"><app-icon name="copy" /> Copy</button>
         <button type="button" class="bare" (click)="saveMarkdown()"><app-icon name="download" /> Markdown</button>
         <button type="button" class="bare" (click)="saveCsv()"><app-icon name="download" /> CSV</button>
+        <button type="button" class="quiet" [routerLink]="['/compare/charts']" [queryParams]="chartParams()">
+          <app-icon name="chart" /> Charts
+        </button>
       </div>
     }
   </div>
@@ -172,11 +175,6 @@
         Show {{ Math.min(hiddenCount(), pageSize) }} more ({{ hiddenCount() }} hidden)
       </button>
     }
-
-    <section class="charts">
-      <h2>Charts</h2>
-      <app-case-charts [sets]="chartSets()" />
-    </section>
 
     @if (flagged().length) {
       <div class="note warn">

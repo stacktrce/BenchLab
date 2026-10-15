@@ -9,19 +9,18 @@ import { RunRecord, Suite } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { validateSuite } from "../../core/suite-validation";
-import { IconComponent } from "../../shared/icon.component";
-import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm.component";
-import { TrendsPanelComponent } from "./trends-panel.component";
+import { IconComponent } from "../../shared/icon/icon.component";
+import { ConfirmItem, RunConfirmComponent } from "../../shared/run-confirm/run-confirm.component";
 import { confirmItems, confirmSummary } from "./run-confirmation";
 import { createCaseGroup, createSuiteForm, fillSuiteForm, formToDraft } from "./suite-form";
 
-type Tab = "cases" | "history" | "trends";
+type Tab = "cases" | "history";
 
 @Component({
   selector: "app-suite-editor",
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, RunConfirmComponent, IconComponent, TrendsPanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, RunConfirmComponent, IconComponent],
   templateUrl: "./suite-editor.component.html",
-  styleUrl: "./suite-editor.component.css",
+  styleUrl: "./suite-editor.component.scss",
   host: {
     "(document:keydown.control.s)": "onSaveKey($event)",
     "(document:keydown.meta.s)": "onSaveKey($event)",

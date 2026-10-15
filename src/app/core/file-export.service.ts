@@ -4,18 +4,18 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { errorMessage } from "./errors";
 import { ToastService } from "./toast.service";
 
-export function exportFileName(base: string, ext: "md" | "csv" | "svg" | "png", date = new Date()): string {
+export function exportFileName(base: string, ext: "md" | "csv" | "png", date = new Date()): string {
   const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "benchlab";
   return `${slug}-${date.toISOString().slice(0, 10)}.${ext}`;
 }
 
-const FILTER_NAMES = { md: "Markdown", csv: "CSV", svg: "SVG image", png: "PNG image" };
+const FILTER_NAMES = { md: "Markdown", csv: "CSV", png: "PNG image" };
 
 @Injectable({ providedIn: "root" })
 export class FileExportService {
   private readonly toast = inject(ToastService);
 
-  async save(defaultName: string, content: string, ext: "md" | "csv" | "svg"): Promise<void> {
+  async save(defaultName: string, content: string, ext: "md" | "csv"): Promise<void> {
     await this.write(defaultName, FILTER_NAMES[ext], ext, (path) => invoke("write_text_file", { path, content }));
   }
 

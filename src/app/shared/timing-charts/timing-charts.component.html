@@ -1,0 +1,19 @@
+<label class="picker">
+  <span>Case</span>
+  <select #picker (change)="pick(picker.value)">
+    @for (name of names(); track name) {
+      <option [value]="name" [selected]="name === current()">{{ name }}</option>
+    }
+  </select>
+</label>
+
+<app-chart-panel title="Distribution of timings" [model]="histogram()" />
+
+<app-chart-panel title="Timings in run order" [model]="runOrder()">
+  @if (runOrder().canZoom) {
+    <label chartTools class="check">
+      <input type="checkbox" [checked]="zoom()" (change)="zoom.set(!zoom())" />
+      Zoom past slow runs
+    </label>
+  }
+</app-chart-panel>

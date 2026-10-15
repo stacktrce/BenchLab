@@ -6,9 +6,9 @@ import { BenchmarkRunnerService, RunOutcome } from "../../core/benchmark-runner.
 import { errorMessage } from "../../core/errors";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
-import { IconComponent } from "../../shared/icon.component";
-import { ResultsTableComponent } from "../../shared/results-table.component";
-import { RunConfirmComponent } from "../../shared/run-confirm.component";
+import { IconComponent } from "../../shared/icon/icon.component";
+import { ResultsTableComponent } from "../../shared/results-table/results-table.component";
+import { RunConfirmComponent } from "../../shared/run-confirm/run-confirm.component";
 
 type Phase = "editing" | "confirming" | "running";
 
@@ -17,7 +17,7 @@ type Phase = "editing" | "confirming" | "running";
   selector: "app-quick-run",
   imports: [FormsModule, ResultsTableComponent, RunConfirmComponent, IconComponent],
   templateUrl: "./quick-run.component.html",
-  styleUrl: "./quick-run.component.css",
+  styleUrl: "./quick-run.component.scss",
 })
 export class QuickRunComponent {
   private readonly runner = inject(BenchmarkRunnerService);

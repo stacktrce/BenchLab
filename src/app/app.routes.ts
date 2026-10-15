@@ -18,9 +18,24 @@ export const routes: Routes = [
       import("./features/suite-editor/suite-editor.component").then((m) => m.SuiteEditorComponent),
   },
   {
+    path: "suites/:id/trends",
+    loadComponent: () =>
+      import("./features/suite-trends/suite-trends.component").then((m) => m.SuiteTrendsComponent),
+  },
+  {
+    path: "runs/:id/charts",
+    loadComponent: () =>
+      import("./features/run-charts/run-charts.component").then((m) => m.RunChartsComponent),
+  },
+  {
     path: "runs/:id",
     loadComponent: () =>
       import("./features/run-detail/run-detail.component").then((m) => m.RunDetailComponent),
+  },
+  {
+    path: "compare/charts",
+    loadComponent: () =>
+      import("./features/compare-charts/compare-charts.component").then((m) => m.CompareChartsComponent),
   },
   {
     path: "compare",

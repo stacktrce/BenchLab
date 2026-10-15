@@ -1,0 +1,49 @@
+<section class="panel">
+  <header>
+    <h2>{{ title() }}</h2>
+    <ng-content select="[chartTools]" />
+    @if (!model().empty) {
+      <button type="button" class="bare" (click)="savePng()" [attr.aria-label]="'Save PNG of ' + title()">
+        Save PNG
+      </button>
+    }
+  </header>
+
+  @if (model().empty) {
+    <p class="faint">{{ model().summary }}</p>
+  } @else {
+    <app-chart-canvas [config]="config()" [summary]="model().summary" />
+    @for (note of model().notes; track note) {
+      <p class="note-line">{{ note }}</p>
+    }
+    <details>
+      <summary>Show data</summary>
+      <div class="scroll" tabindex="0" role="region" [attr.aria-label]="title() + ' data'">
+        <table>
+          <thead>
+            <tr>
+              @for (column of model().table.columns; track $index) {
+                <th scope="col">{{ column }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of model().table.rows; track $index; let r = $index) {
+              <tr>
+                @for (cell of row; track $index; let c = $index) {
+                  <td class="num">
+                    @if (c === 0 && rowLinks()?.[r]; as link) {
+                      <a [routerLink]="link">{{ cell }}</a>
+                    } @else {
+                      {{ cell }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  }
+</section>

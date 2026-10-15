@@ -8,13 +8,13 @@ import { ToolInfo } from "./core/parser/hyperfine.types";
 import { SuiteApiService } from "./core/suite-api.service";
 import { ThemeService } from "./core/theme.service";
 import { ToastService } from "./core/toast.service";
-import { IconComponent } from "./shared/icon.component";
+import { IconComponent } from "./shared/icon/icon.component";
 
 @Component({
   selector: "app-root",
   imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, IconComponent],
   templateUrl: "./app.component.html",
-  styleUrl: "./app.component.css",
+  styleUrl: "./app.component.scss",
 })
 export class AppComponent {
   protected readonly api = inject(SuiteApiService);

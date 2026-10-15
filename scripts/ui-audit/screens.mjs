@@ -1,24 +1,15 @@
 import { clickByText, commandCalled } from "./browser.mjs";
 import { waitFor } from "./wait.mjs";
 
-/** Scrolls the charts into view, optionally on another case and with every "Show data" table open. */
-function showCharts(caseName, openData = false) {
-  return (page) =>
-    page.evaluate(
-      async ([name, open]) => {
-        const charts = document.querySelector("app-case-charts");
-        const picker = charts.querySelector("select");
-        if (name) {
-          picker.value = name;
-          picker.dispatchEvent(new Event("change", { bubbles: true }));
-          await new Promise((r) => setTimeout(r, 100));
-        }
-        if (open) charts.querySelectorAll("details").forEach((d) => (d.open = true));
-        charts.scrollIntoView();
-      },
-      [caseName, openData],
-    );
-}
+/** Picks a case on a chart page and opens every "Show data" table. */
+const chartCase = (caseName) => (page) =>
+  page.evaluate(async (name) => {
+    const picker = document.querySelector("select");
+    picker.value = name;
+    picker.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 100));
+    document.querySelectorAll("details").forEach((d) => (d.open = true));
+  }, caseName);
 
 /** name, route, optional action to reach the state, optional empty-data flag */
 export const SCREENS = [
@@ -28,11 +19,11 @@ export const SCREENS = [
   ["suite", "/suites/s1"],
   ["suite-hooks", "/suites/s1", (p) => p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)))],
   ["history", "/suites/s1", clickByText("History", "[role=tab]")],
-  ["trends", "/suites/s1", clickByText("Trends", "[role=tab]")],
+  ["trends", "/suites/s1/trends"],
   ["run", "/runs/r2"],
   ["compare", "/compare?candidate=r2&baseline=r1"],
-  ["run-charts", "/runs/r2", showCharts()],
-  ["compare-charts", "/compare?candidate=r2&baseline=r1", showCharts("regex split", true)],
+  ["run-charts", "/runs/r2/charts"],
+  ["compare-charts", "/compare/charts?candidate=r2&baseline=r1", chartCase("regex split")],
   ["confirm", "/suites/s1", clickByText("Run")],
   [
     "running",

@@ -1,0 +1,21 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs">
+      @if (candidateRun(); as c) {
+        <a [routerLink]="['/suites', c.record.suiteId]">{{ c.record.suiteName }}</a>
+        <span class="faint">/</span>
+        <a [routerLink]="['/compare']" [queryParams]="compareParams()">Compare runs</a>
+        <span class="faint">/</span>
+      }
+      <h1>Charts</h1>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="note error" role="alert">{{ message }}</div>
+  } @else if (sets().length === 0) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <app-timing-charts [sets]="sets()" />
+  }
+</div>

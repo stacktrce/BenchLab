@@ -16,6 +16,9 @@
                 [title]="result() ? '' : 'This run has no results to compare against'">
           {{ isBaseline() ? "Unpin baseline" : "Pin as baseline" }}
         </button>
+        <button type="button" class="bare" [routerLink]="['/runs', d.record.id, 'charts']" [disabled]="!result()">
+          <app-icon name="chart" /> Charts
+        </button>
         <button type="button" class="quiet" [routerLink]="['/compare']" [queryParams]="{ candidate: d.record.id }">
           <app-icon name="swap" /> Compare
         </button>
@@ -53,10 +56,6 @@
       <section class="section">
         <header><h2>Results</h2></header>
         <app-results-table [cases]="r.cases" />
-      </section>
-      <section class="section">
-        <header><h2>Charts</h2></header>
-        <app-case-charts [sets]="[{ label: 'This run', cases: r.cases, tone: 'plain' }]" />
       </section>
     }
   } @else if (error(); as err) {

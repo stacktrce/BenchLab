@@ -1,0 +1,21 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+select {
+  max-width: 100%;
+}
+
+.faint {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.hint {
+  margin-top: 8px;
+}

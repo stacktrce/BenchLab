@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  color: var(--ink-2);
+}
+:host(.base) {
+  color: var(--ink-3);
+}
+:host(.cand) {
+  color: var(--accent);
+}
+svg {
+  display: block;
+  width: 100%;
+  height: 12px;
+  overflow: visible;
+}
+line {
+  stroke: currentColor;
+  vector-effect: non-scaling-stroke;
+}
+.whisker {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+.band {
+  fill: currentColor;
+  opacity: 0.28;
+}
+.median {
+  stroke-width: 1;
+}
+.mean {
+  stroke-width: 2;
+}

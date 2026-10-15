@@ -9,5 +9,3 @@ export function quantile(sorted: number[], q: number): number {
 export const sortedCopy = (values: number[]): number[] => [...values].sort((a, b) => a - b);
 
 export const median = (values: number[]): number => quantile(sortedCopy(values), 0.5);
-
-export const mean = (values: number[]): number => values.reduce((a, b) => a + b, 0) / values.length;

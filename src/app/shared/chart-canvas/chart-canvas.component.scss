@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+/* Chart.js sizes the canvas to its parent; the parent needs a definite height. */
+.frame {
+  position: relative;
+  height: 280px;
+}

@@ -1,0 +1,36 @@
+<div class="page">
+  <div class="page-bar">
+    <div class="crumbs">
+      @if (suite(); as s) {
+        <a [routerLink]="['/suites', s.id]">{{ s.name }}</a>
+        <span class="faint">/</span>
+      }
+      <h1>Trends</h1>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="note error" role="alert">{{ message }}</div>
+  } @else if (names() === null) {
+    <p class="muted">Loading…</p>
+  } @else if (names()?.length === 0) {
+    <div class="empty"><strong>No results to chart yet</strong>Trends need at least one completed run.</div>
+  } @else {
+    <label class="picker">
+      <span>Case</span>
+      <select #picker (change)="chosen.set(picker.value)">
+        @for (name of names(); track name) {
+          <option [value]="name" [selected]="name === current()">{{ name }}</option>
+        }
+      </select>
+    </label>
+    @if (series() === null) {
+      <p class="muted">Loading…</p>
+    } @else if (enoughRuns()) {
+      <app-chart-panel [title]="'Mean time per run: ' + current()" [model]="model()" [rowLinks]="rowLinks()" />
+      <p class="faint hint">Select a point, or a run in Show data, to open that run.</p>
+    } @else {
+      <p class="faint">A trend needs two completed runs that include this case.</p>
+    }
+  }
+</div>

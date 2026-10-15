@@ -1,0 +1,8 @@
+<svg viewBox="0 0 100 12" preserveAspectRatio="none" role="img" [attr.aria-label]="label()">
+  <line class="whisker" [attr.x1]="x(min())" [attr.x2]="x(max())" y1="6" y2="6" />
+  @if (band(); as b) {
+    <rect class="band" [attr.x]="b.x" [attr.width]="b.w" y="3" height="6" />
+  }
+  <line class="median" [attr.x1]="x(median())" [attr.x2]="x(median())" y1="4" y2="8" />
+  <line class="mean" [attr.x1]="x(mean())" [attr.x2]="x(mean())" y1="0" y2="12" />
+</svg>

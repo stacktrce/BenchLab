@@ -1,0 +1,22 @@
+.lead {
+  margin: 2px 0 10px;
+}
+.items {
+  max-height: 42vh;
+  overflow-y: auto;
+}
+.item {
+  padding: 6px 0;
+}
+.item + .item {
+  border-top: 1px solid var(--line);
+}
+.item-name {
+  font-weight: 500;
+}
+.item pre {
+  margin: 4px 0;
+}
+.summary {
+  margin-top: 8px;
+}

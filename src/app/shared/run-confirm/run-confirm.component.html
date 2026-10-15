@@ -1,0 +1,39 @@
+<div class="backdrop" (click)="cancelled.emit()">
+  <div
+    #dialog
+    class="modal"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-title"
+    (click)="$event.stopPropagation()"
+    (keydown.tab)="trap($event, false)"
+    (keydown.shift.tab)="trap($event, true)"
+  >
+    <h2 id="confirm-title">{{ heading() }}</h2>
+    <p class="muted lead">These commands will run on this machine through hyperfine.</p>
+    <div class="items" tabindex="0" role="region" aria-label="Commands to run">
+      @for (item of items(); track $index) {
+        <div class="item">
+          @if (item.name) {
+            <div class="item-name">{{ item.name }}</div>
+          }
+          <pre>{{ item.command }}</pre>
+          @if (item.setupCommand) {
+            <div class="faint">setup <code>{{ item.setupCommand }}</code></div>
+          }
+          @if (item.cleanupCommand) {
+            <div class="faint">cleanup <code>{{ item.cleanupCommand }}</code></div>
+          }
+          <div class="faint">in {{ item.workingDirectory || "the working directory of the app" }}</div>
+        </div>
+      }
+    </div>
+    @if (summary()) {
+      <p class="muted summary">{{ summary() }}</p>
+    }
+    <div class="actions">
+      <button type="button" class="quiet" (click)="cancelled.emit()">Cancel</button>
+      <button #primary type="button" class="run" (click)="confirmed.emit()">Run</button>
+    </div>
+  </div>
+</div>
