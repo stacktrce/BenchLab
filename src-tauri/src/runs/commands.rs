@@ -1,3 +1,4 @@
+use super::diagnose::{DiagnoseResult, diagnose};
 use super::events::{RunEvent, RunSink, TauriSink};
 use super::execute::execute_suite;
 use super::model::{RunDetail, RunRecord};
@@ -59,6 +60,30 @@ pub async fn run_suite(
         status: outcome.status().to_string(),
     });
     stored
+}
+
+/// Runs one case of the saved suite once, untimed, and returns what it printed. Not recorded as
+/// a run. The frontend must have shown the user the case's commands first.
+#[tauri::command]
+pub async fn diagnose_case(
+    db: State<'_, Db>,
+    control: State<'_, RunControl>,
+    suite_id: String,
+    case_name: String,
+) -> Result<DiagnoseResult, String> {
+    let suite = db.with(|c| load_suite(c, &suite_id))?;
+    let case = suite
+        .cases
+        .into_iter()
+        .find(|c| c.name == case_name)
+        .ok_or_else(|| format!("The suite no longer has a case called \"{case_name}\"."))?;
+    let hyperfine_path = hyperfine::locate_hyperfine()?;
+    let active = control.begin()?;
+    let cancel = active.flag();
+    log::info!("Diagnosing case \"{}\" of \"{}\"", case.name, suite.name);
+    tauri::async_runtime::spawn_blocking(move || diagnose(&hyperfine_path, &case, &cancel))
+        .await
+        .map_err(|e| format!("Diagnosis failed: {e}"))
 }
 
 #[tauri::command]

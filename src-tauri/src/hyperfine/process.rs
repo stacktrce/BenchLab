@@ -33,6 +33,9 @@ pub struct Job<'a> {
     pub timeout: Duration,
     /// Set from another thread to stop the run early.
     pub cancel: Option<&'a AtomicBool>,
+    /// Pass the command's output through and keep going when it fails: for diagnosing a case,
+    /// never for a timed run, because printing changes the timings.
+    pub show_output: bool,
 }
 
 /// `--name=value` as one argument. Passed as two, a value that starts with "-" (a case called
@@ -110,6 +113,9 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
     }
     if let Some(c) = job.cleanup {
         cmd.arg(flag("cleanup", c.as_ref()));
+    }
+    if job.show_output {
+        cmd.arg("--show-output").arg("--ignore-failure");
     }
     cmd.arg("--").arg(job.command);
     if let Some(dir) = job.working_dir.filter(|d| !d.trim().is_empty()) {

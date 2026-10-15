@@ -59,9 +59,18 @@ export function tauriMock({ empty, slow = false }) {
     git: [git],
     rawOutput: JSON.stringify({ results }),
   });
+  const failedRun = (id, startedAt, results, git, error) => {
+    const r = run(id, startedAt, results, git);
+    return { ...r, record: { ...r.record, status: "partial", caseCount: 4, error } };
+  };
   const runs = {
     r1: run("r1", "2026-10-12T09:00:00.000Z", baseline, gitState("9f2c1d47e0a3b58c6d1e2f4a7b9c0d3e5f6a8b1c", "main", 0)),
     r2: run("r2", "2026-10-13T11:30:00.000Z", candidate, gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 2)),
+    // Reachable only by URL, so the run lists (and their screenshots) are unchanged.
+    r3: failedRun(
+      "r3", "2026-10-14T09:15:00.000Z", candidate.slice(0, 3), gitState("c71ab3e90d24f5a6b7c8d9e0f1a2b3c4d5e6f7a8", "perf/join", 0),
+      `"regex split": The command exited with code 1 in the first benchmark run. Check that it runs in a terminal from the case's working directory.`,
+    ),
   };
 
   // A drifting history of one case, oldest first: every 7th run is uncommitted, every 11th has no spread.
@@ -148,6 +157,11 @@ export function tauriMock({ empty, slow = false }) {
             setTimeout(finishRun, 8000);
           });
         }
+        case "diagnose_case":
+          return {
+            exitCode: 1, timedOut: false, cancelled: false, durationSeconds: 0.4, truncated: false,
+            output: "Benchmark 1: regex split\nnode:internal/modules/cjs/loader:1228\n  throw err;\nError: Cannot find module 'bench/split.js'",
+          };
         case "suite_run_durations":
           return [40, 44, 46];
         case "plugin:event|listen":

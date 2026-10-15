@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from "@angular/core";
 import { invoke } from "@tauri-apps/api/core";
 import { ActiveRunService } from "./active-run.service";
-import { CasePoint, RunDetail, RunLog, RunRecord, Suite, SuiteSummary } from "./models";
+import { CasePoint, DiagnoseResult, RunDetail, RunLog, RunRecord, Suite, SuiteSummary } from "./models";
 
 const RECENT_RUNS = 8;
 
@@ -70,6 +70,11 @@ export class SuiteApiService {
 
   getRun(id: string): Promise<RunDetail> {
     return invoke<RunDetail>("get_run", { id });
+  }
+
+  /** Runs one case once, untimed, after the user confirmed its commands. Not recorded as a run. */
+  diagnoseCase(suiteId: string, caseName: string): Promise<DiagnoseResult> {
+    return invoke<DiagnoseResult>("diagnose_case", { suiteId, caseName });
   }
 
   /** Seconds taken by the suite's last completed runs, newest first. */

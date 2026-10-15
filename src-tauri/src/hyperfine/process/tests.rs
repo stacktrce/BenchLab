@@ -27,6 +27,7 @@ fn a_background_process_left_behind_does_not_hold_the_run_up() {
             warmup: None,
             timeout: Duration::from_secs(60),
             cancel: None,
+            show_output: false,
         },
     )
     .unwrap();

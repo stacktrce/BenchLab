@@ -35,6 +35,7 @@ fn run_case(
         warmup: Some(suite.warmup as u32),
         timeout: Duration::from_secs(SUITE_CASE_TIMEOUT_SECS),
         cancel: Some(cancel),
+        show_output: false,
     };
     let out = match hyperfine::exec(hyperfine_path, &job) {
         Ok(o) => o,

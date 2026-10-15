@@ -14,11 +14,12 @@ import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon/icon.component";
 import { ResultsTableComponent } from "../../shared/results-table/results-table.component";
+import { DiagnoseCaseComponent } from "./diagnose-case/diagnose-case.component";
 import { RunLogComponent } from "./run-log/run-log.component";
 
 @Component({
   selector: "app-run-detail",
-  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent, RunLogComponent],
+  imports: [DatePipe, RouterLink, ResultsTableComponent, IconComponent, RunLogComponent, DiagnoseCaseComponent],
   templateUrl: "./run-detail.component.html",
   styleUrl: "./run-detail.component.scss",
 })
@@ -35,7 +36,7 @@ export class RunDetailComponent {
   readonly detail = signal<RunDetail | null>(null);
   readonly result = signal<BenchmarkResult | null>(null);
   readonly error = signal<string | null>(null);
-  private readonly suite = signal<Suite | null>(null);
+  protected readonly suite = signal<Suite | null>(null);
   protected readonly logs = signal<RunLog[] | null>(null);
   /** Case names from the error lines, which read `"name": why`. */
   protected readonly failedCases = computed(() =>

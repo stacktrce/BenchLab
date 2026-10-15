@@ -33,6 +33,7 @@ export const SCREENS = [
       });
     },
   ],
+  ["run-failed", "/runs/r3"],
   ["run-charts", "/runs/r2/charts"],
   ["compare-charts", "/compare/charts?candidate=r2&baseline=r1", chartCase("regex split")],
   ["confirm", "/suites/s1", clickByText("Run")],
