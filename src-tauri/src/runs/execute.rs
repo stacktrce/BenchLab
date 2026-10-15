@@ -1,12 +1,26 @@
 use super::model::{CANCELLED_MESSAGE, SuiteOutcome};
 use crate::git;
 use crate::hyperfine::{self, Job};
+use crate::logs::{LogChunk, LogStream};
 use crate::suites::Suite;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 /// Per-case limit for suite runs. Real benchmarks outlast the 30 s quick-run default.
 const SUITE_CASE_TIMEOUT_SECS: u64 = 600;
+
+/// hyperfine's report (stdout) followed by its warnings and errors (stderr).
+fn hyperfine_log(stdout: &str, stderr: &str) -> String {
+    [stdout.trim_end(), stderr.trim()]
+        .into_iter()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join(
+            "
+
+",
+        )
+}
 
 /// Blocking: runs each enabled case with its own hyperfine process so per-case
 /// setup/cleanup/working directory apply, then merges the result arrays.
@@ -28,6 +42,7 @@ pub(super) fn execute_suite(
         errors: Vec::new(),
         case_count: 0,
         git,
+        logs: Vec::new(),
     };
     for case in suite.cases.iter().filter(|c| c.enabled) {
         if cancel.load(Ordering::SeqCst) {
@@ -53,6 +68,12 @@ pub(super) fn execute_suite(
                 continue;
             }
         };
+        outcome.logs.push(LogChunk {
+            case: case.name.clone(),
+            stream: LogStream::Hyperfine,
+            body: hyperfine_log(&out.stdout, &out.stderr),
+            truncated: false,
+        });
         if out.cancelled {
             outcome.errors.push(CANCELLED_MESSAGE.to_string());
             break;

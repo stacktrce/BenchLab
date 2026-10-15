@@ -4,6 +4,7 @@ use super::series::{self, CasePoint};
 use super::store;
 use crate::db::{Db, now_iso};
 use crate::hyperfine::{self, RunControl};
+use crate::logs::LogChunk;
 use crate::suites::load_suite;
 use tauri::State;
 
@@ -46,6 +47,12 @@ pub fn list_runs(
 #[tauri::command]
 pub fn get_run(db: State<'_, Db>, id: String) -> Result<RunDetail, String> {
     db.with(|c| store::get_run(c, &id))
+}
+
+/// The run's per-case logs, in the order the cases ran; empty for runs from before logs existed.
+#[tauri::command]
+pub fn get_run_logs(db: State<'_, Db>, id: String) -> Result<Vec<LogChunk>, String> {
+    db.with(|c| crate::logs::run_logs(c, &id))
 }
 
 #[tauri::command]

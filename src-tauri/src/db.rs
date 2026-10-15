@@ -67,6 +67,15 @@ const MIGRATIONS: &[&str] = &[
         PRIMARY KEY (run_id, case_name)
     );
     CREATE INDEX idx_run_cases_name ON run_cases(case_name, run_id);",
+    // v8: per-case logs, capped in logs.rs.
+    "CREATE TABLE run_logs (
+        run_id    TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+        case_name TEXT NOT NULL,
+        stream    TEXT NOT NULL CHECK (stream IN ('hyperfine', 'command')),
+        body      TEXT NOT NULL,
+        truncated INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (run_id, case_name, stream)
+    );",
 ];
 
 pub struct Db(Mutex<Connection>);
