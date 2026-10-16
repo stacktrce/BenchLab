@@ -171,15 +171,18 @@ pub fn set_run_meta(
     .map_err(sql_err)
 }
 
-/// Deletes runs with their per-case rows and logs. A suite whose pinned baseline is deleted is
-/// left without one. Unknown ids are skipped; the count is of runs actually deleted.
+/// Deletes runs with their per-case rows and logs, all or none. A suite whose pinned baseline is
+/// deleted is left without one. Unknown ids are skipped; the count is of runs actually deleted.
 pub fn delete_runs(conn: &Connection, ids: &[String]) -> Result<usize, String> {
+    // Dropped without commit on an error, which rolls back the runs already deleted.
+    let tx = conn.unchecked_transaction().map_err(sql_err)?;
     let mut deleted = 0;
     for id in ids {
-        deleted += conn
+        deleted += tx
             .execute("DELETE FROM runs WHERE id = ?1", [id])
             .map_err(sql_err)?;
     }
+    tx.commit().map_err(sql_err)?;
     Ok(deleted)
 }
 

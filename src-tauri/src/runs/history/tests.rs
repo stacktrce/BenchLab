@@ -256,3 +256,20 @@ fn a_version_8_database_upgrades_and_its_runs_have_no_note_or_tags() {
     assert!(page.items[0].record.tags.is_empty());
     assert!(page.items[0].git.is_empty());
 }
+
+#[test]
+fn a_bulk_delete_that_fails_part_way_deletes_nothing() {
+    let (conn, _, _) = fixture();
+    conn.execute_batch(
+        "CREATE TEMP TRIGGER refuse_r2 BEFORE DELETE ON runs WHEN old.id = 'r2'
+         BEGIN SELECT RAISE(ABORT, 'refused'); END;",
+    )
+    .unwrap();
+    assert!(delete_runs(&conn, &["r1".into(), "r2".into()]).is_err());
+    assert_eq!(
+        search_runs(&conn, &RunFilter::default(), 50, 0)
+            .unwrap()
+            .total,
+        4
+    );
+}
