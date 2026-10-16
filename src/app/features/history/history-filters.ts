@@ -66,3 +66,6 @@ export function toRunFilter(f: HistoryFilter): RunFilter {
     tag: value(f.tag),
   };
 }
+
+/** The page holding the last of `total` runs; a page past it shows nothing. */
+export const lastPage = (total: number, pageSize: number): number => Math.max(1, Math.ceil(total / pageSize));

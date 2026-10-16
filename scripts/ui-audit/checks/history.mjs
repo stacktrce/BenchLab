@@ -50,5 +50,13 @@ export async function auditHistory(browser) {
     message: "the delete confirmation",
   });
   check(asks && !(await commandCalled(page, "delete_runs")()), "delete asks first, naming the count, and deletes nothing yet");
+
+  // A page past the end (after deletes, or from an old link) goes to the last page instead of
+  // claiming there are no runs.
+  await page.goto(`${new URL(page.url()).origin}/history?page=9`, { waitUntil: "networkidle0" });
+  const clamped = await becomes(async () => (await pathAndQuery(page)) === "/history" && (await rowCount(page)) === 3, {
+    message: "the page to move back",
+  });
+  check(clamped, `a page past the end moves to the last page (${await pathAndQuery(page)})`);
   await page.close();
 }
