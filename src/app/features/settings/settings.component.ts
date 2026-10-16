@@ -1,17 +1,11 @@
 import { Component, inject, signal } from "@angular/core";
-import { invoke } from "@tauri-apps/api/core";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { AppFilesService, AppPaths } from "../../core/app-files.service";
 import { ACCENTS, TEXT_SIZES } from "../../core/appearance";
 import { errorMessage } from "../../core/errors";
 import { MAX_COUNT, SettingsService } from "../../core/settings.service";
 import { Theme } from "../../core/theme";
 import { ThemeService } from "../../core/theme.service";
 import { ToastService } from "../../core/toast.service";
-
-interface AppPaths {
-  database: string;
-  log: string;
-}
 
 /** Appearance, defaults for new suites, and where BenchLab keeps its files. */
 @Component({
@@ -23,6 +17,7 @@ export class SettingsComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly settings = inject(SettingsService);
   private readonly toast = inject(ToastService);
+  private readonly files = inject(AppFilesService);
 
   protected readonly themes: { id: Theme; name: string }[] = [
     { id: "system", name: "Follow the system" },
@@ -34,7 +29,7 @@ export class SettingsComponent {
   protected readonly paths = signal<AppPaths | null>(null);
 
   constructor() {
-    invoke<AppPaths>("app_paths").then(
+    this.files.paths().then(
       (p) => this.paths.set(p),
       () => this.paths.set(null),
     );
@@ -63,7 +58,7 @@ export class SettingsComponent {
 
   protected async reveal(path: string): Promise<void> {
     try {
-      await revealItemInDir(path);
+      await this.files.revealInFolder(path);
     } catch (e) {
       this.toast.show(`Could not open the folder: ${errorMessage(e)}`, "error");
     }
