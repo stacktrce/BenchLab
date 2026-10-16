@@ -86,6 +86,11 @@ export class RunDetailComponent {
     }
   }
 
+  /** A plain "#run-log" link resolves against <base href="/"> and would leave the page. */
+  protected showLog(): void {
+    document.getElementById("run-log")?.scrollIntoView();
+  }
+
   async togglePin(): Promise<void> {
     const d = this.detail();
     if (!d) return;

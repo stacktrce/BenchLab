@@ -49,7 +49,7 @@
         <p><strong>Some cases did not complete</strong></p>
         <pre>{{ d.record.error }}</pre>
         @if (logs()?.length) {
-          <p><a href="#run-log">Read the log</a> for hyperfine's full output for each case.</p>
+          <p><button type="button" class="link" (click)="showLog()">Read the log</button> for hyperfine's full output for each case.</p>
         }
         @if (suite(); as s) {
           @for (name of failedCases(); track name) {

@@ -98,6 +98,10 @@ export function tauriMock({ empty, slow = false }) {
   Time (mean ± σ):     ${mean} ms ±   1.2 ms    [User: 0.0 ms, System: 0.0 ms]
   Range (min … max):   ${mean - 2} ms … ${mean + 3} ms    10 runs`;
   const logs = {
+    r3: [
+      { case: "concat with +=", stream: "hyperfine", body: report("concat with +=", 41), truncated: false },
+      { case: "regex split", stream: "hyperfine", body: "Error: Command terminated with non-zero exit code 1 in the first benchmark run.", truncated: false },
+    ],
     r1: baseline.map((b) => ({ case: b.command, stream: "hyperfine", body: report(b.command, 42), truncated: false })),
     r2: [
       { case: "concat with +=", stream: "hyperfine", body: report("concat with +=", 41), truncated: false },
