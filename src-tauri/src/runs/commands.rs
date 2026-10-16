@@ -34,14 +34,27 @@ pub async fn run_suite(
         suite.cases.iter().filter(|c| c.enabled).count(),
         suite.runs
     );
+    // Kept outside the task: the frontend must hear "finished" even if the task itself fails,
+    // or its progress display would stay up.
+    let finisher = TauriSink(app.clone());
     let sink = TauriSink(app);
-    let (suite, tool_version, outcome, sink) = tauri::async_runtime::spawn_blocking(move || {
+    let joined = tauri::async_runtime::spawn_blocking(move || {
         let version = hyperfine::tool_version(&hyperfine_path);
         let outcome = execute_suite(&hyperfine_path, &suite, &cancel, &sink);
-        (suite, version, outcome, sink)
+        (suite, version, outcome)
     })
-    .await
-    .map_err(|e| format!("Suite run failed: {e}"))?;
+    .await;
+    let (suite, tool_version, outcome) = match joined {
+        Ok(done) => done,
+        Err(e) => {
+            log::error!("Suite run failed: {e}");
+            finisher.emit(RunEvent::Finished {
+                run_id: None,
+                status: "failed".into(),
+            });
+            return Err(format!("Suite run failed: {e}"));
+        }
+    };
 
     let stored = db.with(|c| store::insert_run(c, &suite, &started_at, &tool_version, &outcome));
     for error in &outcome.errors {
@@ -56,7 +69,7 @@ pub async fn run_suite(
         ),
         Err(e) => log::error!("Suite \"{}\" ran but could not be stored: {e}", suite.name),
     }
-    sink.emit(RunEvent::Finished {
+    finisher.emit(RunEvent::Finished {
         run_id: stored.as_ref().ok().map(|r| r.record.id.clone()),
         status: outcome.status().to_string(),
     });
