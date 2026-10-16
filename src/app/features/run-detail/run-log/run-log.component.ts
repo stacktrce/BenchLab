@@ -25,18 +25,20 @@ export class RunLogComponent {
   protected readonly streamLabel = STREAM_LABEL;
 
   protected readonly hasCommandOutput = computed(() => this.logs().some((l) => l.stream === "command"));
+  /** Colour codes stripped once per load, not on every keystroke in the search box. */
+  private readonly plain = computed(() => this.logs().map((l) => ({ ...l, body: stripAnsi(l.body) })));
   protected readonly shown = computed(() =>
-    this.logs()
+    this.plain()
       .filter((l) => this.stream() === "all" || l.stream === this.stream())
-      .map((l) => ({ ...l, parts: splitMatches(stripAnsi(l.body), this.query().trim()) })),
+      .map((l) => ({ ...l, parts: splitMatches(l.body, this.query().trim()) })),
   );
   protected readonly matchCount = computed(() =>
     this.shown().reduce((n, l) => n + l.parts.filter((p) => p.match).length, 0),
   );
 
   private asText(): string {
-    return this.logs()
-      .map((l) => `== ${l.case} (${STREAM_LABEL[l.stream]})${l.truncated ? " [truncated]" : ""}\n${stripAnsi(l.body)}`)
+    return this.plain()
+      .map((l) => `== ${l.case} (${STREAM_LABEL[l.stream]})${l.truncated ? " [truncated]" : ""}\n${l.body}`)
       .join("\n\n");
   }
 
