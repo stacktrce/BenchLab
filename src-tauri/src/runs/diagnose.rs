@@ -1,6 +1,7 @@
 //! Running a failed case once to see why it failed. hyperfine discards a command's output while
 //! timing it, so this is a separate, untimed run that is never recorded as a benchmark.
 
+use super::execute::hyperfine_log;
 use crate::hyperfine::{self, Job};
 use crate::logs::{CASE_CAP_BYTES, LINE_CAP_CHARS, cap};
 use crate::suites::Case;
@@ -61,15 +62,7 @@ pub(super) fn diagnose(
         .and_then(|j| serde_json::from_str::<serde_json::Value>(j).ok())
         .and_then(|v| v["results"][0]["exit_codes"][0].as_i64())
         .and_then(|code| i32::try_from(code).ok());
-    let text = [out.stdout.trim_end(), out.stderr.trim()]
-        .into_iter()
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join(
-            "
-
-",
-        );
+    let text = hyperfine_log(&out.stdout, &out.stderr);
     let (output, truncated) = cap(&text, CASE_CAP_BYTES, LINE_CAP_CHARS);
     DiagnoseResult {
         exit_code: command_exit.or(out.exit_code),

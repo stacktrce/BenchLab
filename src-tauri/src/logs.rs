@@ -83,9 +83,9 @@ pub fn cap(text: &str, max_bytes: usize, max_line_chars: usize) -> (String, bool
 pub fn store_logs(conn: &Connection, run_id: &str, chunks: &[LogChunk]) -> Result<(), String> {
     let mut left = RUN_CAP_BYTES;
     for chunk in chunks {
-        let (body, mut truncated) = cap(&chunk.body, CASE_CAP_BYTES, LINE_CAP_CHARS);
-        let body = prefix(&body, left);
-        truncated |= chunk.truncated || body.len() < chunk.body.len().min(CASE_CAP_BYTES);
+        let (capped, case_cut) = cap(&chunk.body, CASE_CAP_BYTES, LINE_CAP_CHARS);
+        let body = prefix(&capped, left);
+        let truncated = chunk.truncated || case_cut || body.len() < capped.len();
         left -= body.len();
         conn.execute(
             "INSERT OR REPLACE INTO run_logs (run_id, case_name, stream, body, truncated)
