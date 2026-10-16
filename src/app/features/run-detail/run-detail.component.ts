@@ -6,6 +6,7 @@ import { exportFileName, FileExportService } from "../../core/file-export.servic
 import { Latest } from "../../core/latest";
 import { runToCsv, runToMarkdown } from "../../core/export";
 import { describeGit } from "../../core/format";
+import { failedCaseNames } from "../../core/failed-cases";
 import { RunDetail, RunLog, Suite } from "../../core/models";
 import { parseHyperfineJSON } from "../../core/parser/hyperfine.parser";
 import { BenchmarkResult } from "../../core/parser/hyperfine.types";
@@ -39,9 +40,10 @@ export class RunDetailComponent {
   protected readonly suite = signal<Suite | null>(null);
   protected readonly logs = signal<RunLog[] | null>(null);
   /** Case names from the error lines, which read `"name": why`. */
-  protected readonly failedCases = computed(() =>
-    [...(this.detail()?.record.error ?? "").matchAll(/^"(.*)": /gm)].map((m) => m[1]),
-  );
+  protected readonly failedCases = computed(() => {
+    const d = this.detail();
+    return failedCaseNames(d?.record.error ?? null, d?.config?.cases.map((c) => c.name) ?? null);
+  });
 
   readonly isBaseline = computed(() => {
     const d = this.detail();
