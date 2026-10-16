@@ -11,10 +11,11 @@ A desktop app for the question hyperfine leaves to you: **did my change make it 
 | | hyperfine alone | BenchLab |
 |---|---|---|
 | Rerun the same benchmark later | Retype or script the command line | Saved suite: cases, setup, cleanup, working directory, runs, warm-up |
-| Remember past results | Whatever you saved by hand | Every run stored with its raw output, a snapshot of the suite configuration, and the git commit it measured |
+| Remember past results | Whatever you saved by hand | Every run stored with its raw output, a snapshot of the suite configuration, and the git commit it measured; a History page to search, annotate, tag and delete runs |
+| Know what happened | Scroll back, if the window is still open | Live progress with an estimate of time left, hyperfine's log per case, and a way to run a failed case once and see what it printed |
 | Compare two runs | Eyeball two terminal outputs | Per-case change with a 95% interval, a verdict, and caveats |
 | See change over time | Plot it yourself | Distribution, run-order and per-case trend charts, with the 95% band, uncommitted runs and the regression budget marked |
-| Share results | Copy text | Markdown and CSV export, copy as Markdown |
+| Share results | Copy text | Markdown, CSV and Excel export, copy as Markdown, charts as PNG |
 | Install | Separate | Ships its own hyperfine |
 
 BenchLab does not replace hyperfine. It runs it for you and records what happened.
@@ -32,13 +33,18 @@ The sidebar footer shows which one is in use and its version. Every run records 
 ## Using it
 
 1. **New suite.** Name it, add cases (a name and a command each), and choose timed runs and warm-up runs. Setup and cleanup commands and a working directory are under each case.
-2. **Run.** BenchLab first shows every command, setup, cleanup and directory, and runs nothing until you confirm. You can cancel a running suite; cases already finished are kept.
-3. **Compare.** Open a run and choose Compare. The baseline defaults to the suite's pinned run (pin one from a run's page with Pin as baseline), or to the previous run that has results if none is pinned. Pick any two runs of the suite.
-4. **Charts.** Charts on a run or a comparison opens a page with a histogram of one case's timings and the timings in run order (a cold first run stands out there). Trends on a suite plots one case's mean across its runs, with the 95% band, uncommitted runs and the budget line. Every chart has a Show data table and can be saved as PNG.
+2. **Run.** BenchLab first shows every command, setup, cleanup and directory, and runs nothing until you confirm. While it runs, the sidebar and the suite page show the current case, the time so far and, once the suite has history, about how long is left. You can cancel a running suite; cases already finished are kept.
+3. **Read the run.** A run's page has its results, a searchable log with hyperfine's output for each case, and Markdown, CSV and Excel export. A failed case says why in plain words and offers **Run once and show output**: after the same confirmation, it runs that case once, untimed and not recorded, and shows everything it printed, including errors that a timed run discards.
+4. **Compare.** Open a run and choose Compare. The baseline defaults to the suite's pinned run (pin one from a run's page with Pin as baseline), or to the previous run that has results if none is pinned. Pick any two runs of the suite.
+5. **Charts.** Charts on a run or a comparison opens a page with a histogram of one case's timings and the timings in run order (a cold first run stands out there). Trends on a suite plots one case's mean across its runs, with the 95% band, uncommitted runs and the budget line. Every chart has a Show data table and can be saved as PNG.
 
    ![Trends for one case](docs/screenshots/light-trends.png)
 
-5. **Export.** Markdown, CSV or Excel from a run or a comparison. Use Excel for spreadsheets: a CSV depends on the locale's separators (with a decimal comma, Excel puts each CSV line in one cell), while the `.xlsx` stores numbers as numbers, with the notes and method on a second sheet.
+6. **Export.** Markdown, CSV or Excel from a run or a comparison. Use Excel for spreadsheets: a CSV depends on the locale's separators (with a decimal comma, Excel puts each CSV line in one cell), while the `.xlsx` stores numbers as numbers, with the notes and method on a second sheet.
+
+**History** lists every run across suites: search by suite, branch, commit, note or tag, filter by status and date, add a note and tags, compare two runs, or delete runs. **Settings** chooses the theme, an accent colour, the text size and the run counts new suites start with, and shows where the database and the log are.
+
+![History across suites](docs/screenshots/light-history.png)
 
 **Quick run** times a single command without saving anything. **Load sample data** (sidebar or Quick run) creates a demo suite with two finished runs, so you can look at every screen without running a thing. Its commands (`echo`, listing a directory, a counting loop, starting a shell) are real and harmless, so you can also run it as it is.
 
@@ -69,7 +75,8 @@ Change is candidate minus baseline, so negative is faster.
 
 BenchLab executes the commands you write, through hyperfine's shell, with your user's permissions. Treat a suite like a script.
 
-- Nothing runs on startup, on opening a suite, or on loading sample data. Running always goes through the confirmation dialog.
+- Nothing runs on startup, on opening a suite, or on loading sample data. Running always goes through the confirmation dialog, and so does running a failed case once to see its output.
+- Logs are shown only as text, never as HTML, so a command that prints markup cannot change the page.
 - The backend runs the saved suite, not what the screen holds, so the commands you confirm are the commands that execute.
 - Commands reach hyperfine as single arguments; BenchLab never builds shell strings itself.
 - Exports are written only to `.md`, `.csv` or `.txt` paths chosen in the system save dialog; chart images only to `.png`, and only if the bytes are a PNG; spreadsheets only to `.xlsx`, where text is always stored as text, never as a formula. CSV cells that start with `=`, `+`, `-` or `@` are prefixed so spreadsheets do not run them as formulas.
@@ -102,8 +109,8 @@ Layout:
 | Path | What |
 |---|---|
 | `src/app/core` | Parser, comparison statistics (`compare/`), Chart.js configurations for the charts (`charts/`), export, validation, error messages (framework-free, unit-tested) |
-| `src/app/features` | Quick run, suite editor (with its form mapping and run confirmation as plain functions), run detail, compare |
-| `src-tauri/src` | `db` (SQLite, migrations), `suites/`, `runs/`, `hyperfine/` (locate, process, run slot, commands), `git`, `demo`, `files`; each folder splits model, storage and Tauri commands |
+| `src/app/features` | One folder per page: quick run, suite editor (case list and run history as child components), run detail (log, failed-case diagnosis), compare (run pickers, verdict table), the chart pages, history and settings |
+| `src-tauri/src` | `db` (SQLite, migrations), `suites/`, `runs/` (store, execute, progress events, history search, diagnosis), `hyperfine/` (locate, process, failure wording, run slot, commands), `logs`, `git`, `demo`, `files` (export writers), `console` (no console windows); each folder splits model, storage and Tauri commands |
 | `scripts/fetch-hyperfine.mjs` | Sidecar download and verification |
 | `scripts/ui-audit` | Accessibility, keyboard and regression audit of every screen; `shots-digest.mjs` compares screenshots byte for byte |
 | `AGENTS.md` | Contribution rules: code quality, git workflow, verification |
