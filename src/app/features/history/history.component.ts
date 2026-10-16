@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { errorMessage } from "../../core/errors";
 import { describeGit } from "../../core/format";
@@ -67,6 +67,11 @@ export class HistoryComponent {
   });
 
   constructor() {
+    // The delayed search navigates relative to the current URL; after leaving the page it would
+    // overwrite the next page's query params.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+    });
     effect(() => {
       const filter = this.filter();
       untracked(() => this.load(filter));
