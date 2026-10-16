@@ -158,7 +158,12 @@ pub fn exec(hyperfine: &Path, job: &Job) -> Result<RunOutput, String> {
                 break (None, true);
             }
             Ok(None) => std::thread::sleep(Duration::from_millis(50)),
-            Err(e) => return Err(format!("Failed waiting for hyperfine: {e}")),
+            Err(e) => {
+                // The run slot is released when this returns, so nothing may keep running.
+                tree.kill(&mut child);
+                let _ = std::fs::remove_file(&json_path);
+                return Err(format!("Failed waiting for hyperfine: {e}"));
+            }
         }
     };
 
