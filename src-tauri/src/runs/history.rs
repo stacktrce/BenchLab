@@ -11,8 +11,9 @@ pub const NOTE_MAX_CHARS: usize = 2_000;
 pub const TAGS_MAX: usize = 20;
 const TAG_MAX_CHARS: usize = 40;
 
-/// Every field is optional; an absent field does not filter. Dates are `YYYY-MM-DD` and both
-/// ends are included.
+/// Every field is optional; an absent field does not filter. `from` and `to` are UTC instants
+/// in the stored format (`2026-10-05T23:00:00.000Z`), start included and end excluded: the
+/// frontend turns the user's local days into them, because runs are stored in UTC.
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RunFilter {
@@ -20,7 +21,7 @@ pub struct RunFilter {
     pub status: Option<String>,
     pub from: Option<String>,
     pub to: Option<String>,
-    /// Matches suite name, branch, commit, note and tags, ignoring case.
+    /// Matches suite name, branch, commit, note and tags, ignoring case. JSON keys never match.
     pub text: Option<String>,
     pub tag: Option<String>,
 }
@@ -66,7 +67,7 @@ pub fn search_runs(
             .map(String::from)
     };
     let text = blank(&filter.text).map(|t| like_literal(&t));
-    let tag = blank(&filter.tag).map(|t| serde_json::to_string(&t).unwrap_or_default());
+    let tag = blank(&filter.tag);
     let values = [
         blank(&filter.suite_id),
         blank(&filter.status),
@@ -78,10 +79,13 @@ pub fn search_runs(
     let condition = "(?1 IS NULL OR suite_id = ?1)
         AND (?2 IS NULL OR status = ?2)
         AND (?3 IS NULL OR started_at >= ?3)
-        AND (?4 IS NULL OR started_at < date(?4, '+1 day'))
-        AND (?5 IS NULL OR suite_name LIKE ?5 ESCAPE '!' OR IFNULL(git_json, '') LIKE ?5 ESCAPE '!'
-             OR IFNULL(note, '') LIKE ?5 ESCAPE '!' OR tags LIKE ?5 ESCAPE '!')
-        AND (?6 IS NULL OR EXISTS (SELECT 1 FROM json_each(runs.tags) WHERE json_quote(value) = ?6))";
+        AND (?4 IS NULL OR started_at < ?4)
+        AND (?5 IS NULL OR suite_name LIKE ?5 ESCAPE '!' OR IFNULL(note, '') LIKE ?5 ESCAPE '!'
+             OR EXISTS (SELECT 1 FROM json_each(runs.git_json) AS g
+                        WHERE json_extract(g.value, '$.branch') LIKE ?5 ESCAPE '!'
+                           OR json_extract(g.value, '$.commit') LIKE ?5 ESCAPE '!')
+             OR EXISTS (SELECT 1 FROM json_each(runs.tags) AS t WHERE t.value LIKE ?5 ESCAPE '!'))
+        AND (?6 IS NULL OR EXISTS (SELECT 1 FROM json_each(runs.tags) AS t WHERE t.value = ?6))";
     let total = conn
         .query_row(
             &format!("SELECT COUNT(*) FROM runs WHERE {condition}"),
@@ -167,15 +171,18 @@ pub fn set_run_meta(
     .map_err(sql_err)
 }
 
-/// Deletes runs with their per-case rows and logs. A suite whose pinned baseline is deleted is
-/// left without one. Unknown ids are skipped; the count is of runs actually deleted.
+/// Deletes runs with their per-case rows and logs, all or none. A suite whose pinned baseline is
+/// deleted is left without one. Unknown ids are skipped; the count is of runs actually deleted.
 pub fn delete_runs(conn: &Connection, ids: &[String]) -> Result<usize, String> {
+    // Dropped without commit on an error, which rolls back the runs already deleted.
+    let tx = conn.unchecked_transaction().map_err(sql_err)?;
     let mut deleted = 0;
     for id in ids {
-        deleted += conn
+        deleted += tx
             .execute("DELETE FROM runs WHERE id = ?1", [id])
             .map_err(sql_err)?;
     }
+    tx.commit().map_err(sql_err)?;
     Ok(deleted)
 }
 

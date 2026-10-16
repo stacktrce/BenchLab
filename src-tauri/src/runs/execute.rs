@@ -70,16 +70,12 @@ fn run_case(
 }
 
 /// hyperfine's report (stdout) followed by its warnings and errors (stderr).
-fn hyperfine_log(stdout: &str, stderr: &str) -> String {
+pub(super) fn hyperfine_log(stdout: &str, stderr: &str) -> String {
     [stdout.trim_end(), stderr.trim()]
         .into_iter()
         .filter(|part| !part.is_empty())
         .collect::<Vec<_>>()
-        .join(
-            "
-
-",
-        )
+        .join("\n\n")
 }
 
 /// Blocking: runs each enabled case with its own hyperfine process so per-case

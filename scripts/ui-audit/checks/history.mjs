@@ -50,5 +50,25 @@ export async function auditHistory(browser) {
     message: "the delete confirmation",
   });
   check(asks && !(await commandCalled(page, "delete_runs")()), "delete asks first, naming the count, and deletes nothing yet");
+
+  // Typing a search and leaving at once must not rewrite the next page's URL when the delay ends.
+  await page.goto(`${new URL(page.url()).origin}/history`, { waitUntil: "networkidle0" });
+  await page.waitForSelector("tbody tr");
+  await page.type("input[type=search]", "main");
+  await page.evaluate(() => {
+    history.pushState({}, "", "/compare?candidate=r2&baseline=r1");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  const kept = await pathAndQuery(page);
+  check(kept === "/compare?candidate=r2&baseline=r1", `leaving during a search keeps the next page's URL (${kept})`);
+
+  // A page past the end (after deletes, or from an old link) goes to the last page instead of
+  // claiming there are no runs.
+  await page.goto(`${new URL(page.url()).origin}/history?page=9`, { waitUntil: "networkidle0" });
+  const clamped = await becomes(async () => (await pathAndQuery(page)) === "/history" && (await rowCount(page)) === 3, {
+    message: "the page to move back",
+  });
+  check(clamped, `a page past the end moves to the last page (${await pathAndQuery(page)})`);
   await page.close();
 }

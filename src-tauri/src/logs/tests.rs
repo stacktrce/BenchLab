@@ -44,9 +44,7 @@ fn a_case_over_its_cap_is_truncated() {
     let conn = memory();
     let id = run_id(&conn);
     // Many short lines, so only the per-case cap applies, not the per-line one.
-    let big = "yyy
-"
-    .repeat(CASE_CAP_BYTES / 4 + 10);
+    let big = "yyy\n".repeat(CASE_CAP_BYTES / 4 + 10);
     store_logs(&conn, &id, &[chunk("a", LogStream::Hyperfine, &big)]).unwrap();
     let logs = run_logs(&conn, &id).unwrap();
     assert!(logs[0].truncated);
@@ -57,9 +55,7 @@ fn a_case_over_its_cap_is_truncated() {
 fn a_run_over_its_cap_drops_later_cases_logs_and_marks_them() {
     let conn = memory();
     let id = run_id(&conn);
-    let per_case = "zzz
-"
-    .repeat(CASE_CAP_BYTES / 4);
+    let per_case = "zzz\n".repeat(CASE_CAP_BYTES / 4);
     let names: Vec<String> = (0..=RUN_CAP_BYTES / CASE_CAP_BYTES + 1)
         .map(|i| format!("c{i}"))
         .collect();

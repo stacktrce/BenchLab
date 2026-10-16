@@ -10,13 +10,15 @@ export function splitMatches(text: string, query: string): { text: string; match
   if (text === "") return [];
   if (query === "") return [{ text, match: false }];
   const parts: { text: string; match: boolean }[] = [];
-  const haystack = text.toLowerCase();
-  const needle = query.toLowerCase();
+  // Searched in the original text: a lowercased copy can be longer ("İ" becomes two code units),
+  // and its positions would then point at the wrong place in the original.
+  const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
   let from = 0;
-  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, from)) {
+  for (const found of text.matchAll(pattern)) {
+    const at = found.index;
     if (at > from) parts.push({ text: text.slice(from, at), match: false });
-    parts.push({ text: text.slice(at, at + needle.length), match: true });
-    from = at + needle.length;
+    parts.push({ text: found[0], match: true });
+    from = at + found[0].length;
   }
   if (from < text.length) parts.push({ text: text.slice(from), match: false });
   return parts;

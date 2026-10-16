@@ -5,29 +5,16 @@ mod files;
 mod git;
 mod hyperfine;
 mod logs;
+mod paths;
 mod runs;
 mod suites;
 #[cfg(test)]
 mod testing;
 
+use paths::{DATABASE_FILE, LOG_FILE};
 use std::path::Path;
 use tauri::Manager;
 
-/// Debug builds keep their own database, so running `tauri dev` on a newer schema never
-/// upgrades the data of an installed build (which would then refuse to start).
-const DATABASE_FILE: &str = if cfg!(debug_assertions) {
-    "benchlab-dev.db"
-} else {
-    "benchlab.db"
-};
-
-/// The app's own log, in the platform's log folder (on Windows
-/// `%LOCALAPPDATA%\com.benchlab.main\logs`). Debug builds write their own file, as with the database.
-const LOG_FILE: &str = if cfg!(debug_assertions) {
-    "benchlab-dev"
-} else {
-    "benchlab"
-};
 const LOG_MAX_BYTES: u128 = 1_000_000;
 
 fn log_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
@@ -118,29 +105,10 @@ pub fn run() {
             files::write_text_file,
             files::write_binary_file,
             files::write_xlsx_file,
-            app_paths,
+            paths::commands::app_paths,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-/// Where BenchLab keeps its files, for the Settings page.
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct AppPaths {
-    database: String,
-    log: String,
-}
-
-#[tauri::command]
-fn app_paths(app: tauri::AppHandle) -> Result<AppPaths, String> {
-    let paths = app.path();
-    let data = paths.app_data_dir().map_err(|e| e.to_string())?;
-    let logs = paths.app_log_dir().map_err(|e| e.to_string())?;
-    Ok(AppPaths {
-        database: data.join(DATABASE_FILE).display().to_string(),
-        log: logs.join(format!("{LOG_FILE}.log")).display().to_string(),
-    })
 }
 
 #[cfg(test)]

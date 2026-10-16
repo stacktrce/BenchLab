@@ -35,6 +35,14 @@ describe("splitMatches", () => {
     ]);
   });
 
+  it("keeps matches in place after characters that grow when lowercased", () => {
+    // "İ" lowercases to two code units; positions taken from a lowercased copy would drift.
+    expect(splitMatches("İx time", "time")).toEqual([
+      { text: "İx ", match: false },
+      { text: "time", match: true },
+    ]);
+  });
+
   it("returns the whole text as one non-match for an empty query", () => {
     expect(splitMatches("abc", "")).toEqual([{ text: "abc", match: false }]);
     expect(splitMatches("", "x")).toEqual([]);

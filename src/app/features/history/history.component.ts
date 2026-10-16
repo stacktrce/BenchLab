@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, computed, effect, inject, input, signal, untracked } from "@angular/core";
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { errorMessage } from "../../core/errors";
 import { describeGit } from "../../core/format";
@@ -8,7 +8,7 @@ import { HistoryRow, RunStatus } from "../../core/models";
 import { SuiteApiService } from "../../core/suite-api.service";
 import { ToastService } from "../../core/toast.service";
 import { IconComponent } from "../../shared/icon/icon.component";
-import { HistoryFilter, parseFilter, serializeFilter, toRunFilter } from "./history-filters";
+import { HistoryFilter, lastPage, parseFilter, serializeFilter, toRunFilter } from "./history-filters";
 
 const PAGE_SIZE = 50;
 /** Typing in the search box waits this long before the URL and the results follow. */
@@ -53,7 +53,7 @@ export class HistoryComponent {
   protected readonly describeGit = describeGit;
   protected readonly statuses: RunStatus[] = ["completed", "partial", "failed"];
   protected readonly isFiltered = computed(() => Object.keys(serializeFilter({ ...this.filter(), page: 1 })).length > 0);
-  protected readonly lastPage = computed(() => Math.max(1, Math.ceil(this.total() / PAGE_SIZE)));
+  protected readonly lastPage = computed(() => lastPage(this.total(), PAGE_SIZE));
   protected readonly range = computed(() => {
     const first = (this.filter().page - 1) * PAGE_SIZE + 1;
     return { first, last: Math.min(first + PAGE_SIZE - 1, this.total()) };
@@ -67,6 +67,11 @@ export class HistoryComponent {
   });
 
   constructor() {
+    // The delayed search navigates relative to the current URL; after leaving the page it would
+    // overwrite the next page's query params.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+    });
     effect(() => {
       const filter = this.filter();
       untracked(() => this.load(filter));
@@ -79,6 +84,13 @@ export class HistoryComponent {
     try {
       const page = await this.api.searchRuns(toRunFilter(filter), PAGE_SIZE, (filter.page - 1) * PAGE_SIZE);
       if (!isCurrent()) return;
+      // After a delete, or from a stale link, the page can be past the end: go to the last one
+      // rather than claim there are no runs.
+      const last = lastPage(page.total, PAGE_SIZE);
+      if (filter.page > last) {
+        this.update({ page: last });
+        return;
+      }
       this.rows.set(page.items);
       this.total.set(page.total);
       this.selected.set(new Set());

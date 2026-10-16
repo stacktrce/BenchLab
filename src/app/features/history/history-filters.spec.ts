@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_FILTER, parseFilter, serializeFilter, toRunFilter } from "./history-filters";
+import { EMPTY_FILTER, lastPage, parseFilter, serializeFilter, toRunFilter } from "./history-filters";
 
 describe("history filters in the URL", () => {
   it("round-trips a full filter", () => {
@@ -18,9 +18,26 @@ describe("history filters in the URL", () => {
     expect(parseFilter({ page: "2.5" }).page).toBe(1);
   });
 
+  it("turns local days into UTC instants, the end being the next local midnight", () => {
+    const filter = toRunFilter({ ...EMPTY_FILTER, from: "2026-10-05", to: "2026-10-05" });
+    expect(filter.from).toBe(new Date(2026, 9, 5).toISOString());
+    expect(filter.to).toBe(new Date(2026, 9, 6).toISOString());
+    // Across a month end too.
+    expect(toRunFilter({ ...EMPTY_FILTER, to: "2026-10-31" }).to).toBe(new Date(2026, 10, 1).toISOString());
+  });
+
   it("drops the page from what the backend gets", () => {
     expect(toRunFilter({ ...EMPTY_FILTER, text: " fast ", page: 4 })).toEqual({
       suiteId: null, status: null, from: null, to: null, text: "fast", tag: null,
     });
+  });
+});
+
+describe("lastPage", () => {
+  it("is the page that holds the last run, and 1 when there are none", () => {
+    expect(lastPage(0, 50)).toBe(1);
+    expect(lastPage(50, 50)).toBe(1);
+    expect(lastPage(51, 50)).toBe(2);
+    expect(lastPage(100, 50)).toBe(2);
   });
 });

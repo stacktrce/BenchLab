@@ -116,14 +116,25 @@ h2 {
   font-weight: 600;
 }
 
-a {
+a,
+button.link {
   color: inherit;
   text-decoration: underline;
   text-decoration-color: var(--line-strong);
   text-underline-offset: 3px;
 }
 
-a:hover {
+/* An in-page action that reads as a link, such as "Read the log". */
+button.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+a:hover,
+button.link:hover {
   text-decoration-color: var(--ink);
 }
 

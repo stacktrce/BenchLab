@@ -6,6 +6,13 @@ import { becomes, waitFor } from "../wait.mjs";
 export async function auditDiagnose(browser) {
   const page = await openPage(browser, "/runs/r3");
   await page.waitForSelector("app-diagnose-case button");
+
+  await page.evaluate(() => [...document.querySelectorAll("button.link")].find((b) => b.textContent.includes("Read the log")).click());
+  const stayed = await page.evaluate(() => location.pathname === "/runs/r3");
+  const scrolled = await becomes(() => page.evaluate(() => (() => { const top = document.getElementById("run-log").getBoundingClientRect().top; return top >= 0 && top < innerHeight; })()), {
+    message: "the log to scroll into view",
+  });
+  check(stayed && scrolled, "Read the log scrolls to the log and stays on the run page");
   await page.click("app-diagnose-case button");
   await page.waitForSelector(".modal .run");
   const dialog = await page.$eval(".modal", (m) => m.textContent);

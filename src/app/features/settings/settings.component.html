@@ -46,14 +46,17 @@
       <label>
         Timed runs per case
         <input #runs class="num narrow" type="number" min="1" [value]="settings.settings().defaultRuns"
-               (change)="setCount('defaultRuns', runs.value)" />
+               (change)="setCount('defaultRuns', runs)" />
       </label>
       <label>
         Warm-up runs
         <input #warmup class="num narrow" type="number" min="0" [value]="settings.settings().defaultWarmup"
-               (change)="setCount('defaultWarmup', warmup.value)" />
+               (change)="setCount('defaultWarmup', warmup)" />
       </label>
     </div>
+    @if (countError(); as message) {
+      <p class="note error" role="alert">{{ message }}</p>
+    }
     <p class="faint">Existing suites keep their own numbers.</p>
   </section>
 
