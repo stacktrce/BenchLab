@@ -10,9 +10,9 @@ fn a_background_process_left_behind_does_not_hold_the_run_up() {
         return;
     };
     let command = if cfg!(windows) {
-        "start /b ping -n 31 127.0.0.1"
+        "start /b ping -n 61 127.0.0.1"
     } else {
-        "sleep 30 &"
+        "sleep 60 &"
     };
     let started = Instant::now();
     let out = exec(
@@ -31,8 +31,10 @@ fn a_background_process_left_behind_does_not_hold_the_run_up() {
         },
     )
     .unwrap();
+    // The leftover lives 60 s; finishing well before that proves the run did not wait for it.
+    // The margin is wide because a loaded machine can make the run itself take 20 s or more.
     assert!(
-        started.elapsed() < Duration::from_secs(20),
+        started.elapsed() < Duration::from_secs(45),
         "the run waited {:?} for a leftover process",
         started.elapsed()
     );
