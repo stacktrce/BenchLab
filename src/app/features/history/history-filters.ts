@@ -44,14 +44,24 @@ export function parseFilter(params: Record<string, string | undefined>): History
   };
 }
 
-/** The filter as the Rust `RunFilter` expects it: absent fields are null. */
+/** Midnight at the start of local day `date` (YYYY-MM-DD) plus `days`, as a UTC instant. */
+function localMidnight(date: string, days = 0): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, m - 1, d + days).toISOString();
+}
+
+/**
+ * The filter as the Rust `RunFilter` expects it: absent fields are null. Runs are stored in UTC
+ * and shown in local time, so the local days in the filter become UTC instants, the end being
+ * the midnight after `to`.
+ */
 export function toRunFilter(f: HistoryFilter): RunFilter {
   const value = (v: string) => (v.trim() ? v.trim() : null);
   return {
     suiteId: value(f.suiteId),
     status: value(f.status),
-    from: value(f.from),
-    to: value(f.to),
+    from: f.from ? localMidnight(f.from) : null,
+    to: f.to ? localMidnight(f.to, 1) : null,
     text: value(f.text),
     tag: value(f.tag),
   };

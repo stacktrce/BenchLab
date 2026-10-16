@@ -100,14 +100,22 @@ fn each_filter_narrows_and_they_combine() {
 }
 
 #[test]
-fn the_date_range_includes_both_ends() {
+fn the_time_range_includes_its_start_and_excludes_its_end() {
     let (conn, _, _) = fixture();
+    // One local day at UTC+1: Oct 5 00:00 to Oct 6 00:00 local.
     let f = RunFilter {
-        from: Some("2026-10-05".into()),
-        to: Some("2026-10-05".into()),
+        from: Some("2026-10-04T23:00:00.000Z".into()),
+        to: Some("2026-10-05T23:00:00.000Z".into()),
         ..Default::default()
     };
-    assert_eq!(ids(&search_runs(&conn, &f, 50, 0).unwrap()), ["r3", "r2"]);
+    // r3 started at 23:59 UTC on Oct 5, which is already Oct 6 at UTC+1.
+    assert_eq!(ids(&search_runs(&conn, &f, 50, 0).unwrap()), ["r2"]);
+    let empty = RunFilter {
+        from: Some("2026-10-05T09:00:00.000Z".into()),
+        to: Some("2026-10-05T09:00:00.000Z".into()),
+        ..Default::default()
+    };
+    assert!(search_runs(&conn, &empty, 50, 0).unwrap().items.is_empty());
 }
 
 #[test]
@@ -137,6 +145,20 @@ fn text_matches_suite_branch_note_and_tags_ignoring_case_and_wildcards() {
             .is_empty()
     );
     set_run_meta(&conn, "r1", Some("Laptop on battery"), &["noisy".into()]).unwrap();
+    // JSON keys and punctuation are not content, so they must not match every run.
+    for syntax in ["root", "dirty", "changedFiles", "\"", ",", "["] {
+        assert!(
+            search_runs(&conn, &text(syntax), 50, 0)
+                .unwrap()
+                .items
+                .is_empty(),
+            "{syntax}"
+        );
+    }
+    assert_eq!(
+        ids(&search_runs(&conn, &text("abcr4"), 50, 0).unwrap()),
+        ["r4"]
+    );
     assert_eq!(
         ids(&search_runs(&conn, &text("battery"), 50, 0).unwrap()),
         ["r1"]
