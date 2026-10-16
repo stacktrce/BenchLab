@@ -24,6 +24,20 @@ export async function auditSettings(browser) {
   const button = await runButtonColour(page);
   check(button !== "rgb(194, 65, 12)", `the Run button uses it (${button})`);
 
+  // An impossible default is refused with a reason, and the box shows the saved value again.
+  await page.goto(page.url().replace("/suites/s1", "/settings"), { waitUntil: "networkidle0" });
+  const runsBox = 'input[type="number"]';
+  await page.waitForSelector(runsBox);
+  await page.$eval(runsBox, (input) => {
+    input.value = "0";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const refused = await becomes(() => page.evaluate(() => document.querySelector("[role=alert]")?.textContent.includes("Timed runs must be")), {
+    message: "the refusal",
+  });
+  const shown = await page.$eval(runsBox, (i) => i.value);
+  check(refused && shown === "10", `an invalid default is refused and the box shows the saved value (${shown})`);
+
   await page.evaluate(() => localStorage.removeItem("benchlab.settings"));
   await page.close();
 }

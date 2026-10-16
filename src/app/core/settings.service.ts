@@ -12,13 +12,15 @@ export interface Settings {
 }
 
 const KEY = "benchlab.settings";
+/** Highest run count accepted for new suites. */
+export const MAX_COUNT = 10_000;
 export const DEFAULT_SETTINGS: Settings = { accent: DEFAULT_ACCENT, textSize: "normal", defaultRuns: 10, defaultWarmup: 1 };
 
 /** Keeps only known, sane values, so a damaged or older entry cannot break the app. */
 export function cleanSettings(raw: unknown): Settings {
   const value = (raw ?? {}) as Partial<Record<keyof Settings, unknown>>;
   const count = (v: unknown, min: number, fallback: number) =>
-    typeof v === "number" && Number.isInteger(v) && v >= min && v <= 10_000 ? v : fallback;
+    typeof v === "number" && Number.isInteger(v) && v >= min && v <= MAX_COUNT ? v : fallback;
   return {
     accent: ACCENTS.some((a) => a.id === value.accent) ? (value.accent as string) : DEFAULT_SETTINGS.accent,
     textSize: TEXT_SIZES.some((t) => t.id === value.textSize) ? (value.textSize as string) : DEFAULT_SETTINGS.textSize,

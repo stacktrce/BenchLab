@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { ACCENTS, TEXT_SIZES } from "../../core/appearance";
 import { errorMessage } from "../../core/errors";
-import { SettingsService } from "../../core/settings.service";
+import { MAX_COUNT, SettingsService } from "../../core/settings.service";
 import { Theme } from "../../core/theme";
 import { ThemeService } from "../../core/theme.service";
 import { ToastService } from "../../core/toast.service";
@@ -45,8 +45,20 @@ export class SettingsComponent {
     return accent ? accent[this.theme.effective()].fill : "";
   }
 
-  protected setCount(key: "defaultRuns" | "defaultWarmup", value: string): void {
-    this.settings.update({ [key]: Number(value) });
+  protected readonly countError = signal<string | null>(null);
+
+  /** Out-of-range input is refused with a reason, and the box goes back to the saved value. */
+  protected setCount(key: "defaultRuns" | "defaultWarmup", input: HTMLInputElement): void {
+    const value = Number(input.value);
+    const min = key === "defaultRuns" ? 1 : 0;
+    if (!Number.isInteger(value) || value < min || value > MAX_COUNT) {
+      const what = key === "defaultRuns" ? "Timed runs" : "Warm-up runs";
+      this.countError.set(`${what} must be a whole number from ${min} to ${MAX_COUNT.toLocaleString("en")}.`);
+      input.value = String(this.settings.settings()[key]);
+      return;
+    }
+    this.countError.set(null);
+    this.settings.update({ [key]: value });
   }
 
   protected async reveal(path: string): Promise<void> {
